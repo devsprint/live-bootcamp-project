@@ -5,7 +5,7 @@ use crate::domain::AuthAPIError;
 use crate::routes::{login, logout, signup, verify_2fa, verify_token};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::{serve::Serve, Json, Router};
+use axum::{Json, Router, serve::Serve};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
