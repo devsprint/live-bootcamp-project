@@ -1,5 +1,5 @@
 use crate::domain::User;
-use async_trait::async_trait;
+use std::pin::Pin;
 
 #[derive(Debug, PartialEq)]
 pub enum UserStoreError {
@@ -9,9 +9,18 @@ pub enum UserStoreError {
     UnexpectedError,
 }
 
-#[async_trait]
 pub trait UserStore: Send + Sync {
-    async fn add_user(&mut self, user: User) -> Result<(), UserStoreError>;
-    async fn get_user(&self, email: &str) -> Result<User, UserStoreError>;
-    async fn validate_user(&self, email: &str, password: &str) -> Result<(), UserStoreError>;
+    fn add_user<'a>(
+        &'a mut self,
+        user: User,
+    ) -> Pin<Box<dyn Future<Output = Result<(), UserStoreError>> + Send + 'a>>;
+    fn get_user<'a>(
+        &'a self,
+        email: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<User, UserStoreError>> + Send + 'a>>;
+    fn validate_user<'a>(
+        &'a self,
+        email: &'a str,
+        password: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<(), UserStoreError>> + Send + 'a>>;
 }

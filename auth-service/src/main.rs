@@ -1,5 +1,5 @@
-use auth_service::services::hashmap_user_store::HashmapUserStore;
 use auth_service::Application;
+use auth_service::services::hashmap_user_store::HashmapUserStore;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

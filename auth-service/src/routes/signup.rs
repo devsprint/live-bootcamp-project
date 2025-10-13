@@ -1,9 +1,9 @@
 use crate::domain::{AuthAPIError, Email, Password};
-use crate::{domain, AppState};
+use crate::{AppState, domain};
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::Json;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]

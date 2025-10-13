@@ -1,6 +1,7 @@
 use crate::domain::{User, UserStore, UserStoreError};
-use async_trait::async_trait;
 use std::collections::HashMap;
+use std::future::Future;
+use std::pin::Pin;
 
 #[derive(Debug, Default)]
 #[non_exhaustive]
@@ -18,39 +19,54 @@ impl HashmapUserStore {
     }
 }
 
-#[async_trait]
 impl UserStore for HashmapUserStore {
     /// Adds a new user to the store.
-    async fn add_user(&mut self, user: User) -> Result<(), UserStoreError> {
-        if Some(&user) == self.users.get(&user.email.value) {
-            return Err(UserStoreError::UserAlreadyExists);
-        } else {
-            self.users.insert(user.email.value.clone(), user);
-        }
+    fn add_user<'a>(
+        &'a mut self,
+        user: User,
+    ) -> Pin<Box<dyn Future<Output = Result<(), UserStoreError>> + Send + 'a>> {
+        Box::pin(async move {
+            if Some(&user) == self.users.get(&user.email.value) {
+                return Err(UserStoreError::UserAlreadyExists);
+            } else {
+                self.users.insert(user.email.value.clone(), user);
+            }
 
-        Ok(())
+            Ok(())
+        })
     }
 
     /// Retrieves a user by email.
-    async fn get_user(&self, email: &str) -> Result<User, UserStoreError> {
-        match self.users.get(email) {
-            Some(user) => Ok(user.clone()),
-            None => Err(UserStoreError::UserNotFound),
-        }
+    fn get_user<'a>(
+        &'a self,
+        email: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<User, UserStoreError>> + Send + 'a>> {
+        Box::pin(async move {
+            match self.users.get(email) {
+                Some(user) => Ok(user.clone()),
+                None => Err(UserStoreError::UserNotFound),
+            }
+        })
     }
 
     /// Validates user credentials.
-    async fn validate_user(&self, email: &str, password: &str) -> Result<(), UserStoreError> {
-        match self.users.get(email) {
-            Some(user) => {
-                if user.password.hash == password {
-                    Ok(())
-                } else {
-                    Err(UserStoreError::InvalidCredentials)
+    fn validate_user<'a>(
+        &'a self,
+        email: &'a str,
+        password: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<(), UserStoreError>> + Send + 'a>> {
+        Box::pin(async move {
+            match self.users.get(email) {
+                Some(user) => {
+                    if user.password.hash == password {
+                        Ok(())
+                    } else {
+                        Err(UserStoreError::InvalidCredentials)
+                    }
                 }
+                None => Err(UserStoreError::UserNotFound),
             }
-            None => Err(UserStoreError::UserNotFound),
-        }
+        })
     }
 }
 
