@@ -1,11 +1,11 @@
-use crate::domain::{User, UserStore, UserStoreError};
+use crate::domain::{Email, Password, User, UserStore, UserStoreError};
 use async_trait::async_trait;
 use std::collections::HashMap;
 
 #[derive(Debug, Default)]
 #[non_exhaustive]
 pub struct HashmapUserStore {
-    users: HashMap<String, User>,
+    users: HashMap<Email, User>,
 }
 
 impl HashmapUserStore {
@@ -22,17 +22,17 @@ impl HashmapUserStore {
 impl UserStore for HashmapUserStore {
     /// Adds a new user to the store.
     async fn add_user(&mut self, user: User) -> Result<(), UserStoreError> {
-        if Some(&user) == self.users.get(&user.email.value) {
+        if Some(&user) == self.users.get(&user.email.clone()) {
             return Err(UserStoreError::UserAlreadyExists);
         } else {
-            self.users.insert(user.email.value.clone(), user);
+            self.users.insert(user.email.clone(), user);
         }
 
         Ok(())
     }
 
     /// Retrieves a user by email.
-    async fn get_user(&self, email: &str) -> Result<User, UserStoreError> {
+    async fn get_user(&self, email: &Email) -> Result<User, UserStoreError> {
         match self.users.get(email) {
             Some(user) => Ok(user.clone()),
             None => Err(UserStoreError::UserNotFound),
@@ -40,10 +40,14 @@ impl UserStore for HashmapUserStore {
     }
 
     /// Validates user credentials.
-    async fn validate_user(&self, email: &str, password: &str) -> Result<(), UserStoreError> {
+    async fn validate_user(
+        &self,
+        email: &Email,
+        password: &Password,
+    ) -> Result<(), UserStoreError> {
         match self.users.get(email) {
             Some(user) => {
-                if user.password.hash == password {
+                if &user.password == password {
                     Ok(())
                 } else {
                     Err(UserStoreError::InvalidCredentials)
@@ -74,13 +78,14 @@ mod tests {
     #[tokio::test]
     async fn test_get_user() {
         let mut store = HashmapUserStore::new();
-        let email = "test@test.com".try_into().unwrap();
+        let email: Email = "test@test.com".try_into().unwrap();
+        let wrong_email = "t@test.com".try_into().unwrap();
         let password = "password".try_into().unwrap();
-        let user = User::new(email, password, false);
+        let user = User::new(email.clone(), password, false);
         store.add_user(user.clone()).await.unwrap();
-        assert_eq!(store.get_user("test@test.com").await, Ok(user));
+        assert_eq!(store.get_user(&email).await, Ok(user));
         assert_eq!(
-            store.get_user("t@test.com").await,
+            store.get_user(&wrong_email).await,
             Err(UserStoreError::UserNotFound)
         );
     }
@@ -88,21 +93,20 @@ mod tests {
     #[tokio::test]
     async fn test_validate_user() {
         let mut store = HashmapUserStore::new();
-        let email = "test@test.com".try_into().unwrap();
-        let password = "password".try_into().unwrap();
+        let email: Email = "test@test.com".try_into().unwrap();
+        let password: Password = "password".try_into().unwrap();
+        let wrong_password: Password = "wrong_password".try_into().unwrap();
+        let wrong_email = "t@test.com".try_into().unwrap();
 
-        let user = User::new(email, password, false);
+        let user = User::new(email.clone(), password.clone(), false);
         store.add_user(user).await.unwrap();
+        assert_eq!(store.validate_user(&email, &password).await, Ok(()));
         assert_eq!(
-            store.validate_user("test@test.com", "password").await,
-            Ok(())
-        );
-        assert_eq!(
-            store.validate_user("test@test.com", "wrong").await,
+            store.validate_user(&email, &wrong_password).await,
             Err(UserStoreError::InvalidCredentials)
         );
         assert_eq!(
-            store.validate_user("t@test.com", "password").await,
+            store.validate_user(&wrong_email, &password).await,
             Err(UserStoreError::UserNotFound)
         );
     }

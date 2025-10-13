@@ -7,10 +7,16 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.8.6", features = ["macros"] }
-tokio = { version = "1.36", features = ["full"] }
+tokio = { version = "1.47.1", features = ["full"] }
 tower-http = { version = "0.6.6", features = ["fs"] }
-reqwest = { version = "0.12.23", default-features = false, features = ["json"] }
+reqwest = { version = "0.12.24", default-features = false, features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
 async-trait = "0.1.89"
+validator = { version = "0.20.0", features = ["derive"] }
+
+[dev-dependencies]
+fake = { version = "4.4.0", features = ["derive"] }
+quickcheck = "1.0.3"
+quickcheck_macros = "1.1.0"

@@ -10,6 +10,10 @@ use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
+#[cfg(test)]
+extern crate quickcheck;
+#[cfg(test)]
+extern crate quickcheck_macros;
 mod domain;
 pub mod routes;
 
