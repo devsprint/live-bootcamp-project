@@ -13,7 +13,7 @@ impl TestApp {
     pub async fn new() -> Self {
         let user_store = HashmapUserStore::new();
         let app_state = auth_service::AppState {
-            user_store: Arc::new(RwLock::new(user_store)),
+            user_store: Arc::new(RwLock::new(Box::new(user_store))),
         };
 
         let app = Application::build(app_state, "127.0.0.1:0")

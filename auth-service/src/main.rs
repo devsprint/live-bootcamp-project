@@ -7,7 +7,7 @@ use tokio::sync::RwLock;
 async fn main() {
     let user_store = HashmapUserStore::new();
     let app_state = auth_service::AppState {
-        user_store: Arc::new(RwLock::new(user_store)),
+        user_store: Arc::new(RwLock::new(Box::new(user_store))),
     };
 
     let app = Application::build(app_state, "0.0.0.0:3000")

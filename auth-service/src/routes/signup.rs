@@ -18,6 +18,8 @@ pub struct SignupRequest {
 pub struct SignupResponse {
     pub message: String,
 }
+
+#[axum::debug_handler]
 pub async fn signup(
     State(state): State<AppState>,
     Json(request): Json<SignupRequest>,
@@ -35,7 +37,7 @@ pub async fn signup(
 
     let mut user_store = state.user_store.write().await;
 
-    if let Ok(_stored_user) = user_store.add_user(user) {
+    if let Ok(_stored_user) = user_store.add_user(user).await {
         let response = Json(SignupResponse {
             message: "User created successfully!".to_string(),
         });
