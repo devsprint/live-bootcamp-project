@@ -1,8 +1,12 @@
 use std::error::Error;
 
 pub use crate::app_state::AppState;
+use crate::domain::AuthAPIError;
 use crate::routes::{login, logout, signup, verify_2fa, verify_token};
-use axum::{serve::Serve, Router};
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
+use axum::{serve::Serve, Json, Router};
+use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
@@ -11,6 +15,27 @@ pub mod routes;
 
 mod app_state;
 pub mod services;
+
+#[derive(Serialize, Deserialize)]
+pub struct ErrorResponse {
+    pub error: String,
+}
+
+impl IntoResponse for AuthAPIError {
+    fn into_response(self) -> Response {
+        let (status, error_message) = match self {
+            AuthAPIError::UserAlreadyExists => (StatusCode::CONFLICT, "User already exists"),
+            AuthAPIError::InvalidCredentials => (StatusCode::BAD_REQUEST, "Invalid credentials"),
+            AuthAPIError::UnexpectedError => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Unexpected error")
+            }
+        };
+        let body = Json(ErrorResponse {
+            error: error_message.to_string(),
+        });
+        (status, body).into_response()
+    }
+}
 
 // This struct encapsulates our application-related logic.
 pub struct Application {

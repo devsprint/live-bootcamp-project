@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use crate::domain::User;
+use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 pub enum UserStoreError {
@@ -27,10 +26,10 @@ impl HashmapUserStore {
 
     /// Adds a new user to the store.
     pub fn add_user(&mut self, user: User) -> Result<(), UserStoreError> {
-        if Some(&user) == self.users.get(&user.email) {
+        if Some(&user) == self.users.get(&user.email.value) {
             return Err(UserStoreError::UserAlreadyExists);
         } else {
-            self.users.insert(user.email.clone(), user);
+            self.users.insert(user.email.value.clone(), user);
         }
 
         Ok(())
@@ -48,7 +47,7 @@ impl HashmapUserStore {
     pub fn validate_user(&self, email: &str, password: &str) -> Result<(), UserStoreError> {
         match self.users.get(email) {
             Some(user) => {
-                if user.password == password {
+                if user.password.hash == password {
                     Ok(())
                 } else {
                     Err(UserStoreError::InvalidCredentials)
@@ -66,7 +65,9 @@ mod tests {
     #[tokio::test]
     async fn test_add_user() {
         let mut store = HashmapUserStore::new();
-        let user = User::new("test@test.com".to_string(), "password".to_string(), false);
+        let email = "test@test.com".try_into().unwrap();
+        let password = "password".try_into().unwrap();
+        let user = User::new(email, password, false);
         assert_eq!(store.add_user(user.clone()), Ok(()));
         assert_eq!(store.add_user(user), Err(UserStoreError::UserAlreadyExists));
     }
@@ -74,7 +75,9 @@ mod tests {
     #[tokio::test]
     async fn test_get_user() {
         let mut store = HashmapUserStore::new();
-        let user = User::new("test@test.com".to_string(), "password".to_string(), false);
+        let email = "test@test.com".try_into().unwrap();
+        let password = "password".try_into().unwrap();
+        let user = User::new(email, password, false);
         store.add_user(user.clone()).unwrap();
         assert_eq!(store.get_user("test@test.com"), Ok(user));
         assert_eq!(
@@ -86,7 +89,10 @@ mod tests {
     #[tokio::test]
     async fn test_validate_user() {
         let mut store = HashmapUserStore::new();
-        let user = User::new("test@test.com".to_string(), "password".to_string(), false);
+        let email = "test@test.com".try_into().unwrap();
+        let password = "password".try_into().unwrap();
+
+        let user = User::new(email, password, false);
         store.add_user(user).unwrap();
         assert_eq!(store.validate_user("test@test.com", "password"), Ok(()));
         assert_eq!(
