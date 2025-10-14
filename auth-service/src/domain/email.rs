@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use validator::Validate;
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Validate, Serialize, Deserialize)]
@@ -7,10 +8,10 @@ pub struct Email {
     value: String,
 }
 
-impl TryFrom<&str> for Email {
-    type Error = String;
+impl FromStr for Email {
+    type Err = String;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         let email = Self {
             value: value.to_string(),
         };
@@ -38,28 +39,28 @@ mod tests {
     #[test]
     fn test_email_valid() {
         let val: String = FreeEmail().fake();
-        let email: Result<Email, String> = val.as_str().try_into();
+        let email: Result<Email, String> = Email::from_str(val.as_str());
         assert!(email.is_ok());
     }
 
     #[test]
     fn test_safe_email_valid() {
         let val: String = SafeEmail().fake();
-        let email: Result<Email, String> = val.as_str().try_into();
+        let email: Result<Email, String> = Email::from_str(val.as_str());
         assert!(email.is_ok());
     }
 
     impl Arbitrary for Email {
         fn arbitrary(_g: &mut quickcheck::Gen) -> Self {
             let email_string: String = SafeEmail().fake();
-            email_string.as_str().try_into().unwrap()
+            Email::from_str(email_string.as_str()).unwrap()
         }
     }
 
     quickcheck! {
     fn prop_email(email: Email) -> bool {
         // If we have a valid Email instance, converting it back should work
-        Email::try_from(email.as_ref()).is_ok()
+        Email::from_str(email.as_ref()).is_ok()
     }
         }
 
@@ -71,7 +72,7 @@ mod tests {
             }
 
             // These should fail validation
-            TestResult::from_bool(Email::try_from(s.as_str()).is_err())
+            TestResult::from_bool(Email::from_str(s.as_str()).is_err())
         }
 
     }
@@ -79,7 +80,7 @@ mod tests {
     quickcheck! {
         fn roundtrip(email: Email) -> bool {
             let original = email.as_ref();
-            match Email::try_from(original) {
+            match Email::from_str(original) {
                 Ok(parsed) => parsed.as_ref() == original,
                 Err(_) => false,
             }
@@ -99,7 +100,7 @@ mod tests {
 
         for case in invalid_cases {
             assert!(
-                Email::try_from(case).is_err(),
+                Email::from_str(case).is_err(),
                 "Expected '{}' to be invalid",
                 case
             );
@@ -116,7 +117,7 @@ mod tests {
 
         for case in valid_cases {
             assert!(
-                Email::try_from(case).is_ok(),
+                Email::from_str(case).is_ok(),
                 "Expected '{}' to be valid",
                 case
             );

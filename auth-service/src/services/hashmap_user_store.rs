@@ -61,12 +61,13 @@ impl UserStore for HashmapUserStore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
 
     #[tokio::test]
     async fn test_add_user() {
         let mut store = HashmapUserStore::new();
-        let email = "test@test.com".try_into().unwrap();
-        let password = "password".try_into().unwrap();
+        let email = Email::from_str("test@test.com").unwrap();
+        let password = Password::from_str("password").unwrap();
         let user = User::new(email, password, false);
         assert_eq!(store.add_user(user.clone()).await, Ok(()));
         assert_eq!(
@@ -78,9 +79,9 @@ mod tests {
     #[tokio::test]
     async fn test_get_user() {
         let mut store = HashmapUserStore::new();
-        let email: Email = "test@test.com".try_into().unwrap();
-        let wrong_email = "t@test.com".try_into().unwrap();
-        let password = "password".try_into().unwrap();
+        let email: Email = Email::from_str("test@test.com").unwrap();
+        let wrong_email = Email::from_str("t@test.com").unwrap();
+        let password = Password::from_str("password").unwrap();
         let user = User::new(email.clone(), password, false);
         store.add_user(user.clone()).await.unwrap();
         assert_eq!(store.get_user(&email).await, Ok(user));
@@ -93,10 +94,10 @@ mod tests {
     #[tokio::test]
     async fn test_validate_user() {
         let mut store = HashmapUserStore::new();
-        let email: Email = "test@test.com".try_into().unwrap();
-        let password: Password = "password".try_into().unwrap();
-        let wrong_password: Password = "wrong_password".try_into().unwrap();
-        let wrong_email = "t@test.com".try_into().unwrap();
+        let email: Email = Email::from_str("test@test.com").unwrap();
+        let password = Password::from_str("password").unwrap();
+        let wrong_password: Password = Password::from_str("wrong_password").unwrap();
+        let wrong_email = Email::from_str("t@test.com").unwrap();
 
         let user = User::new(email.clone(), password.clone(), false);
         store.add_user(user).await.unwrap();

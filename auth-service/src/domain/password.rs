@@ -1,12 +1,13 @@
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Password(String);
 
-impl TryFrom<&str> for Password {
-    type Error = String;
+impl FromStr for Password {
+    type Err = String;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         if value.len() < 8 {
             return Err("Password must be at least 8 characters long".to_string());
         }
@@ -32,21 +33,21 @@ mod tests {
     #[test]
     fn test_password_valid() {
         let val: String = FakePassword(8..20).fake();
-        let password: Result<Password, String> = val.as_str().try_into();
+        let password: Result<Password, String> = Password::from_str(val.as_str());
         assert!(password.is_ok());
     }
 
     #[test]
     fn test_password_too_short() {
         let val = "short";
-        let password: Result<Password, String> = val.try_into();
+        let password: Result<Password, String> = Password::from_str(val);
         assert!(password.is_err());
     }
 
     impl Arbitrary for Password {
         fn arbitrary(_g: &mut quickcheck::Gen) -> Self {
             let password_string: String = FakePassword(8..20).fake();
-            password_string.as_str().try_into().unwrap()
+            Password::from_str(password_string.as_str()).unwrap()
         }
     }
 

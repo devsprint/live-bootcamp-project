@@ -5,6 +5,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Deserialize)]
 pub struct SignupRequest {
@@ -24,11 +25,11 @@ pub async fn signup(
     State(state): State<AppState>,
     Json(request): Json<SignupRequest>,
 ) -> Result<impl IntoResponse, AuthAPIError> {
-    let email: Result<Email, String> = request.email.trim().try_into();
+    let email: Result<Email, String> = Email::from_str(request.email.trim());
     if email.is_err() {
         return Err(AuthAPIError::InvalidCredentials);
     }
-    let password: Result<Password, String> = request.password.trim().try_into();
+    let password: Result<Password, String> = Password::from_str(request.password.trim());
     if password.is_err() {
         return Err(AuthAPIError::InvalidCredentials);
     }
