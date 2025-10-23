@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use validator::Validate;
@@ -27,7 +28,6 @@ impl AsRef<str> for Email {
         &self.value
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
