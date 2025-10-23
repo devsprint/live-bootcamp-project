@@ -16,6 +16,7 @@ extern crate quickcheck;
 extern crate quickcheck_macros;
 mod domain;
 pub mod routes;
+pub mod utils;
 
 mod app_state;
 pub mod services;
@@ -32,7 +33,7 @@ impl IntoResponse for AuthAPIError {
             AuthAPIError::InvalidCredentials => (StatusCode::BAD_REQUEST, "Invalid credentials"),
             AuthAPIError::UnexpectedError => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "Unexpected error")
-            },
+            }
             AuthAPIError::IncorrectCredentials => (StatusCode::UNAUTHORIZED, "Unauthorized"),
         };
         let body = Json(ErrorResponse {
