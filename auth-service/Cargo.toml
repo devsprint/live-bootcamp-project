@@ -9,7 +9,7 @@ edition = "2021"
 axum = { version = "0.8.6", features = ["macros"] }
 axum-extra = { version = "0.10.3", features = ["cookie"] }
 tokio = { version = "1.47.1", features = ["full"] }
-tower-http = { version = "0.6.6", features = ["fs"] }
+tower-http = { version = "0.6.6", features = ["fs", "cors"] }
 reqwest = { version = "0.12.24", default-features = false, features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -17,7 +17,8 @@ uuid = { version = "1.7.0", features = ["v4", "serde"] }
 async-trait = "0.1.89"
 validator = { version = "0.20.0", features = ["derive"] }
 dotenvy = "0.15.7"
-lazy_static = "1.4.0"
+lazy_static = "1.5.0"
+
 
 [dev-dependencies]
 reqwest = { version = "0.12.24", default-features = false, features = ["json", "cookies"] }
