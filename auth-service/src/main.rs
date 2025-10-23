@@ -1,8 +1,8 @@
 use auth_service::services::hashmap_user_store::HashmapUserStore;
+use auth_service::utils::prod;
 use auth_service::Application;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use auth_service::utils::prod;
 
 #[tokio::main]
 async fn main() {

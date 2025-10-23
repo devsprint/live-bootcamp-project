@@ -48,15 +48,12 @@ async fn should_return_200_if_valid_jwt_cookie() {
     let response = app.post_signup(&test_case).await;
     assert_eq!(response.status().as_u16(), 201);
 
-
     // login to get valid cookie
     let login_response = app
-        .post_login(
-            &serde_json::json!({
-                "email": test_email,
-                "password": "password123"
-            }),
-        )
+        .post_login(&serde_json::json!({
+            "email": test_email,
+            "password": "password123"
+        }))
         .await;
     assert_eq!(login_response.status().as_u16(), 200);
     let response = app.logout().await;
@@ -78,15 +75,12 @@ async fn should_return_400_if_logout_called_twice_in_a_row() {
     let response = app.post_signup(&test_case).await;
     assert_eq!(response.status().as_u16(), 201);
 
-
     // login to get valid cookie
     let login_response = app
-        .post_login(
-            &serde_json::json!({
-                "email": test_email,
-                "password": "password123"
-            }),
-        )
+        .post_login(&serde_json::json!({
+            "email": test_email,
+            "password": "password123"
+        }))
         .await;
     assert_eq!(login_response.status().as_u16(), 200);
     let first_logout_response = app.logout().await;

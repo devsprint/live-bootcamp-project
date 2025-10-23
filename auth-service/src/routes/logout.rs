@@ -19,7 +19,6 @@ pub async fn logout(jar: CookieJar) -> Result<(CookieJar, impl IntoResponse), Au
 
     match result {
         Ok(valid) => {
-
             if !valid {
                 Err(AuthAPIError::InvalidToken)
             } else {

@@ -1,10 +1,10 @@
 use auth_service::services::HashmapUserStore;
+use auth_service::utils::test;
 use auth_service::Application;
 use reqwest::cookie::Jar;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use auth_service::utils::test;
 
 pub struct TestApp {
     pub address: String,
@@ -96,14 +96,13 @@ impl TestApp {
             .await
             .expect("Failed to execute request.")
     }
-    pub async fn verify_token(&self, token: &str) -> reqwest::Response {
-        let verify_token_body = serde_json::json!({
-            "token": token,
-        });
-
+    pub async fn post_verify_token<Body>(&self, body: &Body) -> reqwest::Response
+    where
+        Body: serde::Serialize,
+    {
         self.http_client
-            .post(&format!("{}/verify-token", &self.address))
-            .json(&verify_token_body)
+            .post(format!("{}/verify-token", &self.address))
+            .json(body)
             .send()
             .await
             .expect("Failed to execute request.")
