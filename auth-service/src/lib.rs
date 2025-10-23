@@ -64,7 +64,7 @@ impl Application {
         let allowed_origins = [
             "http://localhost:8000".parse()?,
             // TODO: Replace [YOUR_DROPLET_IP] with your Droplet IP address
-            "http://[YOUR_DROPLET_IP]:8000".parse()?,
+            "http://http://137.184.153.39:8000".parse()?,
         ];
 
         let cors = CorsLayer::new()
