@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use validator::Validate;

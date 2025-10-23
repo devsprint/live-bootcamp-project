@@ -1,4 +1,4 @@
-mod data_stores;
+pub(crate) mod data_stores;
 mod email;
 mod errors;
 mod password;

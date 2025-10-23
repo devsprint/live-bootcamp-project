@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.8.6", features = ["macros"] }
+axum-extra = { version = "0.10.3", features = ["cookie"] }
 tokio = { version = "1.47.1", features = ["full"] }
 tower-http = { version = "0.6.6", features = ["fs"] }
 reqwest = { version = "0.12.24", default-features = false, features = ["json"] }
@@ -17,6 +18,7 @@ async-trait = "0.1.89"
 validator = { version = "0.20.0", features = ["derive"] }
 
 [dev-dependencies]
+reqwest = { version = "0.12.24", default-features = false, features = ["json", "cookies"] }
 fake = { version = "4.4.0", features = ["derive"] }
 quickcheck = "1.0.3"
 quickcheck_macros = "1.1.0"
