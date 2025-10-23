@@ -1,6 +1,8 @@
 use crate::helpers::TestApp;
 use auth_service::utils::JWT_COOKIE_NAME;
+use reqwest::cookie::CookieStore;
 use reqwest::Url;
+use std::io::BufRead;
 
 #[tokio::test]
 async fn should_return_400_if_jwt_cookie_missing() {
@@ -58,6 +60,26 @@ async fn should_return_200_if_valid_jwt_cookie() {
     assert_eq!(login_response.status().as_u16(), 200);
     let response = app.logout().await;
     assert_eq!(response.status().as_u16(), 200);
+
+    // check if the token has been added to the banned tokens list
+    let cookies = login_response.cookies();
+    let banned_token = cookies
+        .filter(|c| c.name() == JWT_COOKIE_NAME)
+        .map(|c| c.value().to_string())
+        .next()
+        .expect("JWT cookie should be present");
+
+    println!("Banned token: {}", banned_token);
+
+    assert_eq!(
+        app.state()
+            .banned_tokens
+            .read()
+            .await
+            .is_token_banned(banned_token.as_str())
+            .await,
+        Ok(true)
+    );
 }
 
 #[tokio::test]

@@ -10,6 +10,7 @@ pub struct TestApp {
     pub address: String,
     pub cookie_jar: Arc<Jar>,
     pub http_client: reqwest::Client,
+    pub state: auth_service::AppState,
 }
 
 impl TestApp {
@@ -18,9 +19,12 @@ impl TestApp {
         let user_store = HashmapUserStore::new();
         let app_state = auth_service::AppState {
             user_store: Arc::new(RwLock::new(Box::new(user_store))),
+            banned_tokens: Arc::new(RwLock::new(Box::new(
+                auth_service::services::HashSetBannedTokenStore::new(),
+            ))),
         };
 
-        let app = Application::build(app_state, test::APP_ADDRESS)
+        let app = Application::build(app_state.clone(), test::APP_ADDRESS)
             .await
             .expect("Failed to build app");
 
@@ -41,7 +45,12 @@ impl TestApp {
             address,
             cookie_jar,
             http_client,
+            state: app_state,
         }
+    }
+
+    pub fn state(&self) -> &auth_service::AppState {
+        &self.state
     }
 
     pub async fn get_root(&self) -> reqwest::Response {
