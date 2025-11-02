@@ -25,6 +25,9 @@ impl TestApp {
             two_fa_code_store: Arc::new(RwLock::new(Box::new(
                 auth_service::services::HashmapTwoFACodeStore::new(),
             ))),
+            email_client: Arc::new(RwLock::new(Box::new(
+                auth_service::services::MockEmailClient::default(),
+            ))),
         };
 
         let app = Application::build(app_state.clone(), test::APP_ADDRESS)
