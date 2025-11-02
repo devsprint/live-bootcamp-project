@@ -28,7 +28,7 @@ fn create_auth_cookie(token: String) -> Cookie<'static> {
 
     cookie
 }
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
     pub exp: usize,
