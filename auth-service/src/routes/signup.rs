@@ -20,7 +20,6 @@ pub struct SignupResponse {
     pub message: String,
 }
 
-#[axum::debug_handler]
 pub async fn signup(
     State(state): State<AppState>,
     Json(request): Json<SignupRequest>,

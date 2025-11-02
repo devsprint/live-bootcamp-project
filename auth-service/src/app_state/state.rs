@@ -1,4 +1,4 @@
-use crate::domain::{BannedTokenStore, UserStore};
+use crate::domain::{BannedTokenStore, TwoFACodeStore, UserStore};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -6,17 +6,25 @@ use tokio::sync::RwLock;
 pub type UserStoreType = Arc<RwLock<Box<dyn UserStore>>>;
 pub type BannedTokenStoreType = Arc<RwLock<Box<dyn BannedTokenStore>>>;
 
+pub type TwoFACodeStoreType = Arc<RwLock<Box<dyn TwoFACodeStore>>>;
+
 #[derive(Clone)]
 pub struct AppState {
     pub user_store: UserStoreType,
     pub banned_tokens: BannedTokenStoreType,
+    pub two_fa_code_store: TwoFACodeStoreType,
 }
 
 impl AppState {
-    pub fn new(user_store: UserStoreType, banned_token_store: BannedTokenStoreType) -> Self {
+    pub fn new(
+        user_store: UserStoreType,
+        banned_token_store: BannedTokenStoreType,
+        two_fa_code_store_type: TwoFACodeStoreType,
+    ) -> Self {
         Self {
             user_store,
             banned_tokens: banned_token_store,
+            two_fa_code_store: two_fa_code_store_type,
         }
     }
 }

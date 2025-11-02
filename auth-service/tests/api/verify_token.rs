@@ -21,7 +21,7 @@ async fn should_return_200_valid_token() {
     let test_case = serde_json::json!({
         "password": "password123",
         "email": test_email,
-        "requires2FA": true
+        "requires2FA": false
     });
 
     let response = app.post_signup(&test_case).await;
@@ -71,7 +71,7 @@ async fn should_return_401_if_banned_token() {
     let test_case = serde_json::json!({
         "password": "password123",
         "email": test_email,
-        "requires2FA": true
+        "requires2FA": false
     });
     let response = app.post_signup(&test_case).await;
     assert_eq!(response.status().as_u16(), 201);

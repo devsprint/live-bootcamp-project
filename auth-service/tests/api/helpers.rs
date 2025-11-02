@@ -22,6 +22,9 @@ impl TestApp {
             banned_tokens: Arc::new(RwLock::new(Box::new(
                 auth_service::services::HashSetBannedTokenStore::new(),
             ))),
+            two_fa_code_store: Arc::new(RwLock::new(Box::new(
+                auth_service::services::HashmapTwoFACodeStore::new(),
+            ))),
         };
 
         let app = Application::build(app_state.clone(), test::APP_ADDRESS)

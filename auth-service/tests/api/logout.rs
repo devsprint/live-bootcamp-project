@@ -42,7 +42,7 @@ async fn should_return_200_if_valid_jwt_cookie() {
     let test_case = serde_json::json!({
         "password": "password123",
         "email": test_email,
-        "requires2FA": true
+        "requires2FA": false
     });
 
     let response = app.post_signup(&test_case).await;
@@ -89,7 +89,7 @@ async fn should_return_400_if_logout_called_twice_in_a_row() {
     let test_case = serde_json::json!({
         "password": "password123",
         "email": test_email,
-        "requires2FA": true
+        "requires2FA": false
     });
 
     let response = app.post_signup(&test_case).await;
