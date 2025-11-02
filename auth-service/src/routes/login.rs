@@ -46,9 +46,7 @@ pub async fn login(
 
     // Call the generate_auth_cookie function defined in the auth module.
     // If the function call fails return AuthAPIError::UnexpectedError.
-    let auth_cookie = generate_auth_cookie("test")
-        .await
-        .map_err(|_| AuthAPIError::UnexpectedError)?;
+    let auth_cookie = generate_auth_cookie(&email).map_err(|_| AuthAPIError::UnexpectedError)?;
 
     let updated_jar = jar.add(auth_cookie);
 

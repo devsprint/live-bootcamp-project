@@ -1,8 +1,6 @@
 use crate::helpers::TestApp;
 use auth_service::utils::JWT_COOKIE_NAME;
-use reqwest::cookie::CookieStore;
 use reqwest::Url;
-use std::io::BufRead;
 
 #[tokio::test]
 async fn should_return_400_if_jwt_cookie_missing() {

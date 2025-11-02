@@ -19,21 +19,18 @@ pub async fn logout(
     };
 
     let token = cookie.value().to_owned();
+    let banned_token_store = state.banned_tokens.clone();
 
-    let result = crate::utils::auth::validate_token(&token).await;
+    let result = crate::utils::auth::validate_token(&token, banned_token_store).await;
 
     match result {
-        Ok(valid) => {
-            if !valid {
-                Err(AuthAPIError::InvalidToken)
-            } else {
-                let jar = jar.clone().remove(cookie.clone());
-                let result = state.banned_tokens.write().await.ban_token(&token).await;
-                if result.is_err() {
-                    return Err(AuthAPIError::UnexpectedError);
-                }
-                Ok((jar, StatusCode::OK.into_response()))
+        Ok(_claims) => {
+            let jar = jar.clone().remove(cookie.clone());
+            let result = state.banned_tokens.write().await.ban_token(&token).await;
+            if result.is_err() {
+                return Err(AuthAPIError::UnexpectedError);
             }
+            Ok((jar, StatusCode::OK.into_response()))
         }
         Err(_) => Err(AuthAPIError::InvalidToken),
     }
