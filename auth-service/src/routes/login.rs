@@ -81,7 +81,7 @@ async fn handle_no_2fa(
     email: &Email,
     jar: CookieJar,
 ) -> Result<(CookieJar, Json<LoginResponse>), AuthAPIError> {
-    let auth_cookie = generate_auth_cookie(&email).map_err(|_| AuthAPIError::UnexpectedError)?;
+    let auth_cookie = generate_auth_cookie(email).map_err(|_| AuthAPIError::UnexpectedError)?;
 
     let updated_jar = jar.add(auth_cookie);
 
@@ -112,7 +112,7 @@ async fn handle_2fa(
         .email_client
         .write()
         .await
-        .send_email(email, "2FA code", &two_fa_code.as_ref())
+        .send_email(email, "2FA code", two_fa_code.as_ref())
         .await
         .map_err(|_| AuthAPIError::UnexpectedError)?;
     // Finally, we need to return the login attempt ID to the client

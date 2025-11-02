@@ -39,6 +39,12 @@ pub enum TwoFACodeStoreError {
 #[derive(Debug, Clone, PartialEq)]
 pub struct LoginAttemptId(String);
 
+impl LoginAttemptId {
+    pub fn new(id: String) -> Self {
+        LoginAttemptId(id)
+    }
+}
+
 impl AsRef<str> for LoginAttemptId {
     fn as_ref(&self) -> &str {
         &self.0
@@ -82,7 +88,7 @@ pub struct TwoFACode(String);
 impl TwoFACode {
     pub fn parse(code: String) -> Result<Self, String> {
         // Ensure `code` is a valid 6-digit code
-        if code.len() == 6 && code.chars().all(|c| c.is_digit(10)) {
+        if code.len() == 6 && code.chars().all(|c| c.is_ascii_digit()) {
             Ok(TwoFACode(code))
         } else {
             Err("Invalid 2FA code format".to_string())

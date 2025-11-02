@@ -15,7 +15,7 @@ use tower_http::services::ServeDir;
 extern crate quickcheck;
 #[cfg(test)]
 extern crate quickcheck_macros;
-mod domain;
+pub mod domain;
 pub mod routes;
 pub mod utils;
 
