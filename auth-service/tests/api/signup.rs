@@ -1,7 +1,9 @@
 use crate::helpers::{get_random_email, TestApp};
 use auth_service::routes::SignupResponse;
 use auth_service::ErrorResponse;
+use cleanup_db_macro::with_cleanup;
 
+#[with_cleanup(app)]
 #[tokio::test]
 async fn should_return_422_if_malformed_input() {
     let app = TestApp::new().await;
@@ -43,9 +45,9 @@ async fn should_return_422_if_malformed_input() {
             test_case
         );
     }
-    app.cleanup().await;
 }
 
+#[with_cleanup(app)]
 #[tokio::test]
 async fn should_return_201_if_valid_input() {
     let app = TestApp::new().await;
@@ -71,9 +73,9 @@ async fn should_return_201_if_valid_input() {
             .expect("Could not deserialize response body to UserBody"),
         expected_response
     );
-    app.cleanup().await;
 }
 
+#[with_cleanup(app)]
 #[tokio::test]
 async fn should_return_400_if_invalid_input() {
     let app = TestApp::new().await;
@@ -114,9 +116,9 @@ async fn should_return_400_if_invalid_input() {
             "Invalid credentials".to_owned()
         );
     }
-    app.cleanup().await;
 }
 
+#[with_cleanup(app)]
 #[tokio::test]
 async fn should_return_409_if_email_already_exists() {
     let app = TestApp::new().await;
@@ -140,5 +142,4 @@ async fn should_return_409_if_email_already_exists() {
             .error,
         "User already exists".to_owned()
     );
-    app.cleanup().await;
 }

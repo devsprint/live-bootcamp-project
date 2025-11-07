@@ -1,6 +1,8 @@
 use crate::helpers::TestApp;
 use auth_service::utils::JWT_COOKIE_NAME;
+use cleanup_db_macro::with_cleanup;
 
+#[with_cleanup(app)]
 #[tokio::test]
 async fn should_return_422_if_malformed_input() {
     let app = TestApp::new().await;
@@ -11,9 +13,9 @@ async fn should_return_422_if_malformed_input() {
         }))
         .await;
     assert_eq!(response.status().as_u16(), 422);
-    app.cleanup().await;
 }
 
+#[with_cleanup(app)]
 #[tokio::test]
 async fn should_return_200_valid_token() {
     let app = TestApp::new().await;
@@ -50,9 +52,9 @@ async fn should_return_200_valid_token() {
         }))
         .await;
     assert_eq!(response.status().as_u16(), 200);
-    app.cleanup().await;
 }
 
+#[with_cleanup(app)]
 #[tokio::test]
 async fn should_return_401_if_invalid_token() {
     let app = TestApp::new().await;
@@ -63,9 +65,9 @@ async fn should_return_401_if_invalid_token() {
         }))
         .await;
     assert_eq!(response.status().as_u16(), 401);
-    app.cleanup().await;
 }
 
+#[with_cleanup(app)]
 #[tokio::test]
 async fn should_return_401_if_banned_token() {
     let app = TestApp::new().await;
@@ -102,5 +104,4 @@ async fn should_return_401_if_banned_token() {
         }))
         .await;
     assert_eq!(response.status().as_u16(), 401);
-    app.cleanup().await;
 }

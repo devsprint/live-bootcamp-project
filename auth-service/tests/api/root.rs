@@ -1,5 +1,7 @@
 use crate::helpers::TestApp;
+use cleanup_db_macro::with_cleanup;
 
+#[with_cleanup(app)]
 #[tokio::test]
 async fn root_returns_auth_ui() {
     let app = TestApp::new().await;
@@ -8,5 +10,4 @@ async fn root_returns_auth_ui() {
 
     assert_eq!(response.status().as_u16(), 200);
     assert_eq!(response.headers().get("content-type").unwrap(), "text/html");
-    app.cleanup().await;
 }

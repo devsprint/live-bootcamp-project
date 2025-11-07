@@ -88,6 +88,7 @@ dependencies = [
  "axum",
  "axum-extra",
  "chrono",
+ "cleanup_db_macro",
  "dotenvy",
  "fake",
  "jsonwebtoken",
@@ -303,6 +304,15 @@ dependencies = [
  "num-traits",
  "wasm-bindgen",
  "windows-link",
+]
+
+[[package]]
+name = "cleanup_db_macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
