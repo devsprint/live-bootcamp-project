@@ -1,6 +1,6 @@
-use crate::helpers::{get_random_email, TestApp};
-use auth_service::routes::SignupResponse;
+use crate::helpers::{TestApp, get_random_email};
 use auth_service::ErrorResponse;
+use auth_service::routes::SignupResponse;
 use cleanup_db_macro::api_test;
 
 #[api_test]

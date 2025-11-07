@@ -1,7 +1,8 @@
 use auth_service::domain::UserStore;
 use auth_service::services::data_stores::postgres_user_store::PostgresUserStore;
-use auth_service::utils::{test, DATABASE_URL};
-use auth_service::{get_postgres_pool, Application};
+use auth_service::utils::{DATABASE_URL, REDIS_HOST_NAME, test};
+use auth_service::{Application, get_postgres_pool};
+use redis::ConnectionLike;
 use reqwest::cookie::Jar;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
@@ -29,13 +30,20 @@ impl TestApp {
             .get_database()
             .unwrap()
             .to_string();
+        let redis = auth_service::get_redis_client(REDIS_HOST_NAME.to_owned())
+            .expect("Failed to get Redis client")
+            .get_connection()
+            .expect("Failed to get Redis connection");
+        println!("Using Redis at: {:?}", redis.is_open());
+
+        let redis = Arc::new(RwLock::new(redis));
 
         let user_store: Arc<RwLock<Box<dyn UserStore>>> =
             Arc::new(RwLock::new(Box::new(PostgresUserStore::new(pg_pool))));
         let app_state = auth_service::AppState {
             user_store,
             banned_tokens: Arc::new(RwLock::new(Box::new(
-                auth_service::services::HashSetBannedTokenStore::new(),
+                auth_service::services::RedisBannedTokenStore::new(redis),
             ))),
             two_fa_code_store: Arc::new(RwLock::new(Box::new(
                 auth_service::services::HashmapTwoFACodeStore::new(),

@@ -53,6 +53,9 @@ async fn should_return_200_if_valid_jwt_cookie() {
         .await;
     assert_eq!(login_response.status().as_u16(), 200);
     let response = app.logout().await;
+
+    println!("response: {:?}", response);
+
     assert_eq!(response.status().as_u16(), 200);
 
     // check if the token has been added to the banned tokens list
@@ -78,7 +81,7 @@ async fn should_return_200_if_valid_jwt_cookie() {
 
 #[api_test]
 async fn should_return_400_if_logout_called_twice_in_a_row() {
-    let test_email = "test_2@test.com";
+    let test_email = "test_3@test.com";
 
     let test_case = serde_json::json!({
         "password": "password123",

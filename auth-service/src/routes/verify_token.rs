@@ -1,9 +1,9 @@
-use crate::utils::auth::validate_token;
 use crate::AppState;
+use crate::utils::auth::validate_token;
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::Json;
 
 #[derive(serde::Deserialize)]
 pub struct TokenRequest {

@@ -3,7 +3,7 @@ use crate::app_state::BannedTokenStoreType;
 use crate::domain::Email;
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use chrono::Utc;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Validation};
+use jsonwebtoken::{DecodingKey, EncodingKey, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
@@ -20,13 +20,11 @@ pub fn generate_auth_cookie(email: &Email) -> Result<Cookie<'static>, GenerateTo
 }
 
 fn create_auth_cookie(token: String) -> Cookie<'static> {
-    let cookie = Cookie::build((JWT_COOKIE_NAME, token))
+    Cookie::build((JWT_COOKIE_NAME, token))
         .path("/")
         .http_only(true)
         .same_site(SameSite::Lax)
-        .build();
-
-    cookie
+        .build()
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {

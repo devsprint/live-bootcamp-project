@@ -25,10 +25,10 @@ impl AsRef<str> for Password {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fake::faker::internet::en::Password as FakePassword;
     use fake::Fake;
-    use quickcheck::quickcheck;
+    use fake::faker::internet::en::Password as FakePassword;
     use quickcheck::Arbitrary;
+    use quickcheck::quickcheck;
 
     #[test]
     fn test_password_valid() {

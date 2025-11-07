@@ -1,6 +1,6 @@
+use crate::AppState;
 use crate::domain::AuthAPIError;
 use crate::utils::JWT_COOKIE_NAME;
-use crate::AppState;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;

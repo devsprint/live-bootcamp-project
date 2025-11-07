@@ -132,7 +132,7 @@ async fn should_return_200_if_correct_code() {
         .await
         .unwrap();
     drop(two_fa_code_store); // Release the write lock
-                             // Now, attempt to verify 2FA with the correct code
+    // Now, attempt to verify 2FA with the correct code
     let verify_response = app
         .post_verify_2fa(&json!({
             "email": email,
@@ -171,7 +171,7 @@ async fn should_return_401_if_same_code_twice() {
         .await
         .unwrap();
     drop(two_fa_code_store); // Release the write lock
-                             // Now, attempt to verify 2FA with the correct code
+    // Now, attempt to verify 2FA with the correct code
     let verify_response = app
         .post_verify_2fa(&json!({
             "email": email,

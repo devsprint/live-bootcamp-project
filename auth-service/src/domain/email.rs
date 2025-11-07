@@ -30,8 +30,8 @@ impl AsRef<str> for Email {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fake::faker::internet::en::{FreeEmail, SafeEmail};
     use fake::Fake;
+    use fake::faker::internet::en::{FreeEmail, SafeEmail};
     use quickcheck::quickcheck;
     use quickcheck::{Arbitrary, TestResult};
 
