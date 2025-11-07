@@ -1,33 +1,28 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, ItemFn, parse::Parse, parse::ParseStream, Ident, Stmt, parse_quote};
-
-struct CleanupArgs {
-    var_name: Ident,
-}
-
-impl Parse for CleanupArgs {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let var_name: Ident = input.parse()?;
-        Ok(CleanupArgs { var_name })
-    }
-}
+use syn::{parse_macro_input, ItemFn};
 
 #[proc_macro_attribute]
-pub fn with_cleanup(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attr as CleanupArgs);
-    let var_name = args.var_name;
+pub fn api_test(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Parse the input function
+    let input_fn = parse_macro_input!(item as ItemFn);
 
-    let mut function = parse_macro_input!(item as ItemFn);
+    // Get the function's name, inputs, output, and body
+    let fn_name = &input_fn.sig.ident;
+    let fn_inputs = &input_fn.sig.inputs;
+    let fn_output = &input_fn.sig.output;
+    let fn_body = &input_fn.block;
 
-    // Add cleanup call as the last statement
-    let cleanup_call: Stmt = parse_quote! {
-        #var_name.cleanup().await;
+    // Generate a new function that includes the setup and cleanup code
+    let expanded = quote! {
+        #[tokio::test]
+        async fn #fn_name(#fn_inputs) #fn_output {
+            let app = TestApp::new().await;
+            #fn_body
+            app.cleanup().await;
+        }
     };
 
-    function.block.stmts.push(cleanup_call);
-
-    TokenStream::from(quote! {
-        #function
-    })
+    // Return the new function as a TokenStream
+    expanded.into()
 }

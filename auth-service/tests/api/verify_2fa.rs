@@ -1,24 +1,20 @@
 use crate::helpers::TestApp;
 use auth_service::domain::Email;
 use axum::http::StatusCode;
-use cleanup_db_macro::with_cleanup;
+use cleanup_db_macro::api_test;
 use serde_json::json;
 use std::str::FromStr;
 
-#[with_cleanup(app)]
-#[tokio::test]
+#[api_test]
 async fn should_return_422_if_malformed_input() {
-    let app = TestApp::new().await;
     let response = app
         .post_verify_2fa(&json!({ "message": "malformed input" }))
         .await;
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 }
 
-#[with_cleanup(app)]
-#[tokio::test]
+#[api_test]
 async fn should_return_400_if_invalid_input() {
-    let app = TestApp::new().await;
     let response = app
         .post_verify_2fa(&json!({
             "email": "invalid-email",
@@ -29,10 +25,8 @@ async fn should_return_400_if_invalid_input() {
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
-#[with_cleanup(app)]
-#[tokio::test]
+#[api_test]
 async fn should_return_401_if_incorrect_credentials() {
-    let app = TestApp::new().await;
     let email = "test@tes.com";
 
     // First, sign up a user who requires 2FA
@@ -65,11 +59,9 @@ async fn should_return_401_if_incorrect_credentials() {
     assert_eq!(verify_response.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[with_cleanup(app)]
-#[tokio::test]
+#[api_test]
 async fn should_return_401_if_old_code() {
     // Call login twice. Then, attempt to call verify-fa with the 2FA code from the first login request. This should fail.
-    let app = TestApp::new().await;
     let email = "test@test.com";
     // First, sign up a user who requires 2FA
     let signup_response = app
@@ -111,10 +103,8 @@ async fn should_return_401_if_old_code() {
     assert_eq!(verify_response.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[with_cleanup(app)]
-#[tokio::test]
+#[api_test]
 async fn should_return_200_if_correct_code() {
-    let app = TestApp::new().await;
     let email = "test@test.com";
     // First, sign up a user who requires 2FA
     let signup_response = app
@@ -153,10 +143,8 @@ async fn should_return_200_if_correct_code() {
     assert_eq!(verify_response.status(), StatusCode::OK);
 }
 
-#[with_cleanup(app)]
-#[tokio::test]
+#[api_test]
 async fn should_return_401_if_same_code_twice() {
-    let app = TestApp::new().await;
     let email = "test@test.com";
     // First, sign up a user who requires 2FA
     let signup_response = app

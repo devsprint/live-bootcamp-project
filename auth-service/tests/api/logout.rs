@@ -1,12 +1,10 @@
 use crate::helpers::TestApp;
 use auth_service::utils::JWT_COOKIE_NAME;
-use cleanup_db_macro::with_cleanup;
+use cleanup_db_macro::api_test;
 use reqwest::Url;
 
-#[with_cleanup(app)]
-#[tokio::test]
+#[api_test]
 async fn should_return_400_if_jwt_cookie_missing() {
-    let app = TestApp::new().await;
     let response = app.logout().await;
     let cookies = response.cookies();
     if cookies
@@ -18,11 +16,8 @@ async fn should_return_400_if_jwt_cookie_missing() {
     assert_eq!(response.status().as_u16(), 400);
 }
 
-#[with_cleanup(app)]
-#[tokio::test]
+#[api_test]
 async fn should_return_401_if_invalid_token() {
-    let app = TestApp::new().await;
-
     // add invalid cookie
     app.cookie_jar.add_cookie_str(
         &format!(
@@ -36,11 +31,8 @@ async fn should_return_401_if_invalid_token() {
     assert_eq!(response.status().as_u16(), 401);
 }
 
-#[with_cleanup(app)]
-#[tokio::test]
+#[api_test]
 async fn should_return_200_if_valid_jwt_cookie() {
-    let app = TestApp::new().await;
-
     let test_email = "test_2@test.com";
 
     let test_case = serde_json::json!({
@@ -84,11 +76,8 @@ async fn should_return_200_if_valid_jwt_cookie() {
     );
 }
 
-#[with_cleanup(app)]
-#[tokio::test]
+#[api_test]
 async fn should_return_400_if_logout_called_twice_in_a_row() {
-    let app = TestApp::new().await;
-
     let test_email = "test_2@test.com";
 
     let test_case = serde_json::json!({
