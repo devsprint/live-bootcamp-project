@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use std::env as std_env;
 
 pub const JWT_COOKIE_NAME: &str = "jwt";
-pub const DEFAULT_REDIS_HOSTNAME: &str = "localhost";
+pub const DEFAULT_REDIS_HOSTNAME: &str = "127.0.0.1";
 
 // Define a lazily evaluated static. lazy_static is needed because std_env::var is not a const function.
 lazy_static! {
