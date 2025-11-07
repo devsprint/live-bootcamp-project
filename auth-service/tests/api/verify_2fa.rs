@@ -11,6 +11,7 @@ async fn should_return_422_if_malformed_input() {
         .post_verify_2fa(&json!({ "message": "malformed input" }))
         .await;
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -24,6 +25,7 @@ async fn should_return_400_if_invalid_input() {
         }))
         .await;
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -59,6 +61,7 @@ async fn should_return_401_if_incorrect_credentials() {
         }))
         .await;
     assert_eq!(verify_response.status(), StatusCode::UNAUTHORIZED);
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -104,6 +107,7 @@ async fn should_return_401_if_old_code() {
         }))
         .await;
     assert_eq!(verify_response.status(), StatusCode::UNAUTHORIZED);
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -145,6 +149,7 @@ async fn should_return_200_if_correct_code() {
         }))
         .await;
     assert_eq!(verify_response.status(), StatusCode::OK);
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -194,4 +199,5 @@ async fn should_return_401_if_same_code_twice() {
         }))
         .await;
     assert_eq!(second_verify_response.status(), StatusCode::UNAUTHORIZED);
+    app.cleanup().await;
 }

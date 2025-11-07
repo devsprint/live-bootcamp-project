@@ -12,6 +12,7 @@ async fn should_return_422_if_malformed_credentials() {
         }))
         .await;
     assert_eq!(response.status().as_u16(), 422);
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -26,6 +27,7 @@ async fn should_return_400_if_invalid_input() {
         }))
         .await;
     assert_eq!(response.status().as_u16(), 400);
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -51,6 +53,7 @@ async fn should_return_401_if_incorrect_credentials() {
         }))
         .await;
     assert_eq!(response.status().as_u16(), 401);
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -84,6 +87,7 @@ async fn should_return_200_if_valid_credentials_and_2fa_disabled() {
         .expect("No auth cookie found");
 
     assert!(!auth_cookie.value().is_empty());
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -124,4 +128,5 @@ async fn should_return_206_if_valid_credentials_and_2fa_enabled() {
         .await
         .expect("2FA code should be stored");
     assert_eq!(two_fa_response.login_attempt_id, attempt_id.as_ref());
+    app.cleanup().await;
 }

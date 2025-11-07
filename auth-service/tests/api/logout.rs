@@ -14,6 +14,7 @@ async fn should_return_400_if_jwt_cookie_missing() {
         panic!("JWT cookie should not be present");
     };
     assert_eq!(response.status().as_u16(), 400);
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -31,6 +32,7 @@ async fn should_return_401_if_invalid_token() {
 
     let response = app.logout().await;
     assert_eq!(response.status().as_u16(), 401);
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -78,6 +80,7 @@ async fn should_return_200_if_valid_jwt_cookie() {
             .await,
         Ok(true)
     );
+    app.cleanup().await;
 }
 
 #[tokio::test]
@@ -107,4 +110,5 @@ async fn should_return_400_if_logout_called_twice_in_a_row() {
     assert_eq!(first_logout_response.status().as_u16(), 200);
     let second_logout_response = app.logout().await;
     assert_eq!(second_logout_response.status().as_u16(), 400);
+    app.cleanup().await;
 }

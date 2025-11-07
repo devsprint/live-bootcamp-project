@@ -57,7 +57,7 @@ impl UserStore for PostgresUserStore {
     ) -> Result<(), UserStoreError> {
         let user = self.get_user(email).await?;
 
-        verify_password_hash(&user.password.as_ref(), password.as_ref())
+        verify_password_hash(user.password.as_ref(), password.as_ref())
             .await
             .map_err(|_| UserStoreError::InvalidCredentials)
     }
