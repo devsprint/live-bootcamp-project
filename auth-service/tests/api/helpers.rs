@@ -43,10 +43,10 @@ impl TestApp {
         let app_state = auth_service::AppState {
             user_store,
             banned_tokens: Arc::new(RwLock::new(Box::new(
-                auth_service::services::RedisBannedTokenStore::new(redis),
+                auth_service::services::RedisBannedTokenStore::new(redis.clone()),
             ))),
             two_fa_code_store: Arc::new(RwLock::new(Box::new(
-                auth_service::services::HashmapTwoFACodeStore::new(),
+                auth_service::services::RedisTwoFACodeStore::new(redis),
             ))),
             email_client: Arc::new(RwLock::new(Box::new(
                 auth_service::services::MockEmailClient::default(),
