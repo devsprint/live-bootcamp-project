@@ -20,6 +20,7 @@ pub struct SignupResponse {
     pub message: String,
 }
 
+#[tracing::instrument(name = "Signup", skip_all, err(Debug))] // New!
 pub async fn signup(
     State(state): State<AppState>,
     Json(request): Json<SignupRequest>,
