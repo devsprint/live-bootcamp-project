@@ -5,6 +5,7 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_extra::extract::CookieJar;
+use color_eyre::eyre::eyre;
 
 pub async fn logout(
     State(state): State<AppState>,
@@ -28,7 +29,7 @@ pub async fn logout(
             let jar = jar.clone().remove(cookie.clone());
             let result = state.banned_tokens.write().await.ban_token(&token).await;
             if result.is_err() {
-                return Err(AuthAPIError::UnexpectedError);
+                return Err(AuthAPIError::UnexpectedError(eyre!("Failed to ban token.")));
             }
             Ok((jar, StatusCode::OK.into_response()))
         }

@@ -6,6 +6,7 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_extra::extract::CookieJar;
+use color_eyre::eyre::eyre;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -56,7 +57,7 @@ pub async fn login(
         .await
         .map_err(|err| match err {
             UserStoreError::InvalidCredentials => AuthAPIError::IncorrectCredentials,
-            _ => AuthAPIError::UnexpectedError,
+            err => AuthAPIError::UnexpectedError(err.into()),
         })?;
 
     // Call the generate_auth_cookie function defined in the auth module.
@@ -81,7 +82,8 @@ async fn handle_no_2fa(
     email: &Email,
     jar: CookieJar,
 ) -> Result<(CookieJar, Json<LoginResponse>), AuthAPIError> {
-    let auth_cookie = generate_auth_cookie(email).map_err(|_| AuthAPIError::UnexpectedError)?;
+    let auth_cookie =
+        generate_auth_cookie(email).map_err(|e| AuthAPIError::UnexpectedError(e.into()))?;
 
     let updated_jar = jar.add(auth_cookie);
 
@@ -106,7 +108,7 @@ async fn handle_2fa(
         .await
         .add_code(email.clone(), login_attempt_id.clone(), two_fa_code.clone())
         .await
-        .map_err(|_| AuthAPIError::UnexpectedError)?;
+        .map_err(|e| AuthAPIError::UnexpectedError(e.into()))?;
 
     state
         .email_client
@@ -114,7 +116,7 @@ async fn handle_2fa(
         .await
         .send_email(email, "2FA code", two_fa_code.as_ref())
         .await
-        .map_err(|_| AuthAPIError::UnexpectedError)?;
+        .map_err(|e| AuthAPIError::UnexpectedError(eyre!(e)))?;
     // Finally, we need to return the login attempt ID to the client
     let response = Json(LoginResponse::TwoFactorAuth(TwoFactorAuthResponse {
         message: "2FA required".to_owned(),

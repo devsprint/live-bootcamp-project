@@ -1,7 +1,7 @@
-use std::sync::Arc;
-
+use color_eyre::eyre::eyre;
 use redis::{Commands, Connection};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tokio::sync::RwLock;
 
 use crate::domain::{
@@ -33,11 +33,11 @@ impl TwoFACodeStore for RedisTwoFACodeStore {
             code.as_ref().to_string(),
         );
         let serialized_value = serde_json::to_string(&two_fa_tuple)
-            .map_err(|_| TwoFACodeStoreError::UnexpectedError)?;
+            .map_err(|e| TwoFACodeStoreError::UnexpectedError(e.into()))?;
         let mut conn = self.conn.write().await;
         let _: () = conn
             .set_ex(&key, serialized_value, TEN_MINUTES_IN_SECONDS)
-            .map_err(|_| TwoFACodeStoreError::UnexpectedError)?;
+            .map_err(|e| TwoFACodeStoreError::UnexpectedError(e.into()))?;
         Ok(())
     }
 
@@ -46,7 +46,7 @@ impl TwoFACodeStore for RedisTwoFACodeStore {
         let mut conn = self.conn.write().await;
         let _: () = conn
             .del(&key)
-            .map_err(|_| TwoFACodeStoreError::UnexpectedError)?;
+            .map_err(|e| TwoFACodeStoreError::UnexpectedError(e.into()))?;
         Ok(())
     }
 
@@ -59,12 +59,12 @@ impl TwoFACodeStore for RedisTwoFACodeStore {
         let result: String = conn
             .get(&key)
             .map_err(|_| TwoFACodeStoreError::LoginAttemptIdNotFound)?;
-        let two_fa_tuple: TwoFATuple =
-            serde_json::from_str(&result).map_err(|_| TwoFACodeStoreError::UnexpectedError)?;
+        let two_fa_tuple: TwoFATuple = serde_json::from_str(&result)
+            .map_err(|e| TwoFACodeStoreError::UnexpectedError(e.into()))?;
         let login_attempt_id = LoginAttemptId::parse(two_fa_tuple.0)
-            .map_err(|_| TwoFACodeStoreError::UnexpectedError)?;
-        let two_fa_code =
-            TwoFACode::parse(two_fa_tuple.1).map_err(|_| TwoFACodeStoreError::UnexpectedError)?;
+            .map_err(|e| TwoFACodeStoreError::UnexpectedError(eyre!(e)))?;
+        let two_fa_code = TwoFACode::parse(two_fa_tuple.1)
+            .map_err(|e| TwoFACodeStoreError::UnexpectedError(eyre!(e)))?;
         Ok((login_attempt_id, two_fa_code))
     }
 }

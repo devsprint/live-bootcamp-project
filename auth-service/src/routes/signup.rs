@@ -20,7 +20,7 @@ pub struct SignupResponse {
     pub message: String,
 }
 
-#[tracing::instrument(name = "Signup", skip_all, err(Debug))] // New!
+#[tracing::instrument(name = "Signup", skip_all)]
 pub async fn signup(
     State(state): State<AppState>,
     Json(request): Json<SignupRequest>,
@@ -38,13 +38,16 @@ pub async fn signup(
 
     let mut user_store = state.user_store.write().await;
 
-    if let Ok(_stored_user) = user_store.add_user(user).await {
-        let response = Json(SignupResponse {
-            message: "User created successfully!".to_string(),
-        });
-
-        Ok((StatusCode::CREATED, response))
-    } else {
-        Err(AuthAPIError::UserAlreadyExists)
+    match user_store.add_user(user).await {
+        Err(domain::data_stores::UserStoreError::UserAlreadyExists) => {
+            Err(AuthAPIError::UserAlreadyExists)
+        }
+        Err(e) => Err(AuthAPIError::UnexpectedError(e.into())),
+        Ok(_) => {
+            let response = SignupResponse {
+                message: "User created successfully!".to_string(),
+            };
+            Ok((StatusCode::CREATED, Json(response)))
+        }
     }
 }

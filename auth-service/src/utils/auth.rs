@@ -3,13 +3,18 @@ use crate::app_state::BannedTokenStoreType;
 use crate::domain::Email;
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use chrono::Utc;
+use color_eyre::Report;
+use color_eyre::eyre::eyre;
 use jsonwebtoken::{DecodingKey, EncodingKey, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum GenerateTokenError {
+    #[error("Token error")]
     TokenError,
-    UnexpectedError,
+    #[error("Unexpected error")]
+    UnexpectedError(#[source] Report),
 }
 
 pub const TOKEN_TTL_SECONDS: i64 = 600;
@@ -33,17 +38,20 @@ pub struct Claims {
 }
 
 fn generate_auth_token(email: &Email) -> Result<String, GenerateTokenError> {
-    let delta = chrono::Duration::try_seconds(TOKEN_TTL_SECONDS)
-        .ok_or(GenerateTokenError::UnexpectedError)?;
+    let delta = chrono::Duration::try_seconds(TOKEN_TTL_SECONDS).ok_or(
+        GenerateTokenError::UnexpectedError(eyre!("Failed to convert to seconds.")),
+    )?;
 
     let exp = Utc::now()
         .checked_add_signed(delta)
-        .ok_or(GenerateTokenError::UnexpectedError)?
+        .ok_or(GenerateTokenError::UnexpectedError(eyre!(
+            "Failed to get curren time"
+        )))?
         .timestamp();
 
     let exp: usize = exp
         .try_into()
-        .map_err(|_| GenerateTokenError::UnexpectedError)?;
+        .map_err(|_| GenerateTokenError::UnexpectedError(eyre!("Failed to convert to usize.")))?;
 
     let sub = email.as_ref().to_owned();
 
