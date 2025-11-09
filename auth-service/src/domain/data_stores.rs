@@ -1,6 +1,7 @@
 use crate::domain::{Email, Password, User};
 use async_trait::async_trait;
-use color_eyre::Report;
+use color_eyre::eyre::{Context, eyre};
+use color_eyre::{Report, eyre};
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -69,12 +70,6 @@ impl PartialEq for TwoFACodeStoreError {
 #[derive(Debug, Clone, PartialEq)]
 pub struct LoginAttemptId(String);
 
-impl LoginAttemptId {
-    pub fn new(id: String) -> Self {
-        LoginAttemptId(id)
-    }
-}
-
 impl AsRef<str> for LoginAttemptId {
     fn as_ref(&self) -> &str {
         &self.0
@@ -98,11 +93,11 @@ pub trait TwoFACodeStore: Send + Sync {
 }
 
 impl LoginAttemptId {
-    pub fn parse(id: String) -> Result<Self, String> {
+    pub fn parse(id: String) -> eyre::Result<Self> {
         // Use the `parse_str` function from the `uuid` crate to ensure `id` is a valid UUID
         Uuid::parse_str(&id)
+            .wrap_err("Invalid login attempt id")
             .map(|_| LoginAttemptId(id))
-            .map_err(|e| format!("Invalid UUID format: {}", e))
     }
 }
 
@@ -116,12 +111,13 @@ impl Default for LoginAttemptId {
 pub struct TwoFACode(String);
 
 impl TwoFACode {
-    pub fn parse(code: String) -> Result<Self, String> {
-        // Ensure `code` is a valid 6-digit code
-        if code.len() == 6 && code.chars().all(|c| c.is_ascii_digit()) {
-            Ok(TwoFACode(code))
+    pub fn parse(code: String) -> eyre::Result<Self> {
+        let code_as_u32 = code.parse::<u32>().wrap_err("Invalid 2FA code")?; // Updated!
+
+        if (100_000..=999_999).contains(&code_as_u32) {
+            Ok(Self(code))
         } else {
-            Err("Invalid 2FA code format".to_string())
+            Err(eyre!("Invalid 2FA code")) // Updated!
         }
     }
 }

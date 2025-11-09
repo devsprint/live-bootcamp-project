@@ -28,7 +28,8 @@ pub async fn verify_2fa(
     };
 
     let login_attempt_id_from_request =
-        crate::domain::LoginAttemptId::new(request.login_attempt_id);
+        crate::domain::LoginAttemptId::parse(request.login_attempt_id)
+            .map_err(|_| AuthAPIError::InvalidCredentials)?;
     let two_fa_code_from_request = match crate::domain::TwoFACode::parse(request.two_fa_code) {
         Ok(code) => code,
         Err(_) => return Err(AuthAPIError::InvalidCredentials),
