@@ -1,7 +1,9 @@
 use crate::helpers::{TestApp, get_random_email};
+use auth_service::domain::Email;
 use auth_service::routes::TwoFactorAuthResponse;
 use auth_service::utils::JWT_COOKIE_NAME;
 use cleanup_db_macro::api_test;
+use secrecy::Secret;
 
 #[api_test]
 async fn should_return_422_if_malformed_credentials() {
@@ -113,7 +115,7 @@ async fn should_return_206_if_valid_credentials_and_2fa_enabled() {
         .two_fa_code_store
         .read()
         .await
-        .get_code(&random_email.parse().unwrap())
+        .get_code(&Email::parse(Secret::new(random_email.to_string())).unwrap())
         .await
         .expect("2FA code should be stored");
     assert_eq!(two_fa_response.login_attempt_id, attempt_id.as_ref());

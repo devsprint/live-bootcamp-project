@@ -6,11 +6,11 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_extra::extract::CookieJar;
-use std::str::FromStr;
+use secrecy::Secret;
 
 #[derive(serde::Deserialize)]
 pub struct Verify2FARequest {
-    pub email: String,
+    pub email: Secret<String>,
     #[serde(rename = "loginAttemptId")]
     pub login_attempt_id: String,
     #[serde(rename = "2FACode")]
@@ -23,7 +23,7 @@ pub async fn verify_2fa(
     jar: CookieJar,
     Json(request): Json<Verify2FARequest>,
 ) -> Result<(CookieJar, impl IntoResponse), AuthAPIError> {
-    let email = match crate::domain::Email::from_str(&request.email) {
+    let email = match crate::domain::Email::parse(request.email) {
         Ok(email) => email,
         Err(_) => return Err(AuthAPIError::InvalidCredentials),
     };

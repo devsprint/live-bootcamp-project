@@ -4,12 +4,14 @@ use auth_service::utils::{DATABASE_URL, REDIS_HOST_NAME, test};
 use auth_service::{Application, get_postgres_pool};
 use redis::ConnectionLike;
 use reqwest::cookie::Jar;
+use secrecy::{ExposeSecret, Secret};
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::cell::Cell;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use tracing::debug;
 use uuid::Uuid;
 
 pub struct TestApp {
@@ -34,7 +36,7 @@ impl TestApp {
             .expect("Failed to get Redis client")
             .get_connection()
             .expect("Failed to get Redis connection");
-        println!("Using Redis at: {:?}", redis.is_open());
+        debug!("Using Redis at: {:?}", redis.is_open());
 
         let redis = Arc::new(RwLock::new(redis));
 
@@ -175,12 +177,16 @@ async fn configure_postgresql() -> PgPool {
     // We are creating a new database for each test case, and we need to ensure each database has a unique name!
     let db_name = Uuid::new_v4().to_string();
 
-    configure_database(&postgresql_conn_url, &db_name).await;
+    configure_database(&postgresql_conn_url.expose_secret().as_ref(), &db_name).await;
 
-    let postgresql_conn_url_with_db = format!("{}/{}", postgresql_conn_url, db_name);
+    let postgresql_conn_url_with_db = format!(
+        "{}/{}",
+        postgresql_conn_url.expose_secret().as_str(),
+        db_name
+    );
 
     // Create a new connection pool and return it
-    get_postgres_pool(&postgresql_conn_url_with_db)
+    get_postgres_pool(&Secret::new(postgresql_conn_url_with_db))
         .await
         .expect("Failed to create Postgres connection pool!")
 }
@@ -214,7 +220,7 @@ async fn configure_database(db_conn_string: &str, db_name: &str) {
 }
 
 async fn delete_database(db_name: &str) {
-    let postgresql_conn_url: String = DATABASE_URL.to_owned();
+    let postgresql_conn_url: String = DATABASE_URL.to_owned().expose_secret().to_string();
 
     let connection_options = PgConnectOptions::from_str(&postgresql_conn_url)
         .expect("Failed to parse PostgreSQL connection string");

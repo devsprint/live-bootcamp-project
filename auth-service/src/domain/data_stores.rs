@@ -2,6 +2,8 @@ use crate::domain::{Email, Password, User};
 use async_trait::async_trait;
 use color_eyre::eyre::{Context, eyre};
 use color_eyre::{Report, eyre};
+use rand::random;
+use secrecy::{ExposeSecret, Secret};
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -60,8 +62,8 @@ impl PartialEq for TokenStoreError {
 
 #[async_trait]
 pub trait BannedTokenStore: Send + Sync {
-    async fn ban_token(&mut self, token: &str) -> Result<(), TokenStoreError>;
-    async fn is_token_banned(&self, token: &str) -> Result<bool, TokenStoreError>;
+    async fn ban_token(&mut self, token: Secret<String>) -> Result<(), TokenStoreError>;
+    async fn is_token_banned(&self, token: Secret<String>) -> Result<bool, TokenStoreError>;
 }
 
 #[derive(Debug, Error)]
@@ -82,12 +84,18 @@ impl PartialEq for TwoFACodeStoreError {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct LoginAttemptId(String);
+#[derive(Debug, Clone)]
+pub struct LoginAttemptId(Secret<String>);
+
+impl PartialEq for LoginAttemptId {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.expose_secret() == other.0.expose_secret()
+    }
+}
 
 impl AsRef<str> for LoginAttemptId {
     fn as_ref(&self) -> &str {
-        &self.0
+        &self.0.expose_secret()
     }
 }
 
@@ -112,25 +120,31 @@ impl LoginAttemptId {
         // Use the `parse_str` function from the `uuid` crate to ensure `id` is a valid UUID
         Uuid::parse_str(&id)
             .wrap_err("Invalid login attempt id")
-            .map(|_| LoginAttemptId(id))
+            .map(|_| LoginAttemptId(Secret::new(id)))
     }
 }
 
 impl Default for LoginAttemptId {
     fn default() -> Self {
-        LoginAttemptId(Uuid::new_v4().to_string())
+        LoginAttemptId(Secret::new(Uuid::new_v4().to_string()))
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct TwoFACode(String);
+#[derive(Clone, Debug)]
+pub struct TwoFACode(Secret<String>);
+
+impl PartialEq for TwoFACode {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.expose_secret() == other.0.expose_secret()
+    }
+}
 
 impl TwoFACode {
     pub fn parse(code: String) -> eyre::Result<Self> {
         let code_as_u32 = code.parse::<u32>().wrap_err("Invalid 2FA code")?;
 
         if (000_000..=999_999).contains(&code_as_u32) {
-            Ok(Self(code))
+            Ok(Self(Secret::new(code)))
         } else {
             Err(eyre!("Invalid 2FA code"))
         }
@@ -142,15 +156,15 @@ impl Default for TwoFACode {
         // Use the `rand` crate to generate a random 2FA code.
         // The code should be 6 digits (ex: 834629)
         let code: String = (0..6)
-            .map(|_| rand::random::<u8>() % 10)
+            .map(|_| random::<u8>() % 10)
             .map(|digit| digit.to_string())
             .collect();
-        TwoFACode(code)
+        TwoFACode(Secret::new(code))
     }
 }
 
 impl AsRef<str> for TwoFACode {
     fn as_ref(&self) -> &str {
-        &self.0
+        &self.0.expose_secret()
     }
 }

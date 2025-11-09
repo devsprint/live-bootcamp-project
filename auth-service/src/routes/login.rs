@@ -7,13 +7,13 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_extra::extract::CookieJar;
 use color_eyre::eyre::eyre;
+use secrecy::Secret;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 
 #[derive(Deserialize)]
 pub struct LoginRequest {
-    email: String,
-    password: String,
+    email: Secret<String>,
+    password: Secret<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -32,13 +32,16 @@ pub struct TwoFactorAuthResponse {
 
 impl LoginRequest {
     pub fn new(email: String, password: String) -> LoginRequest {
-        LoginRequest { email, password }
+        LoginRequest {
+            email: Secret::new(email),
+            password: Secret::new(password),
+        }
     }
 
-    pub fn email(&self) -> &str {
+    pub fn email(&self) -> &Secret<String> {
         &self.email
     }
-    pub fn password(&self) -> &str {
+    pub fn password(&self) -> &Secret<String> {
         &self.password
     }
 }
@@ -49,10 +52,9 @@ pub async fn login(
     jar: CookieJar,
     Json(credentials): Json<LoginRequest>,
 ) -> Result<(CookieJar, impl IntoResponse), AuthAPIError> {
-    let email =
-        Email::from_str(&credentials.email).map_err(|_| AuthAPIError::InvalidCredentials)?;
+    let email = Email::parse(credentials.email).map_err(|_| AuthAPIError::InvalidCredentials)?;
     let password =
-        Password::from_str(&credentials.password).map_err(|_| AuthAPIError::InvalidCredentials)?;
+        Password::parse(credentials.password).map_err(|_| AuthAPIError::InvalidCredentials)?;
     let user_store = &state.user_store.read().await;
     user_store
         .validate_user(&email, &password)

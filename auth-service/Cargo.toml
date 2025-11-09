@@ -30,6 +30,7 @@ tracing-subscriber = { version = "0.3.20", features = ["registry", "env-filter"]
 thiserror = "2.0.17"
 color-eyre = "0.6.5"
 tracing-error = "0.2.1"
+secrecy = { version = "0.8.0", features = ["serde"] }
 
 
 [dev-dependencies]

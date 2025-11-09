@@ -2,8 +2,8 @@ use crate::helpers::TestApp;
 use auth_service::domain::Email;
 use axum::http::StatusCode;
 use cleanup_db_macro::api_test;
+use secrecy::Secret;
 use serde_json::json;
-use std::str::FromStr;
 
 #[api_test]
 async fn should_return_422_if_malformed_input() {
@@ -128,7 +128,7 @@ async fn should_return_200_if_correct_code() {
 
     let two_fa_code_store = app.state().two_fa_code_store.write().await;
     let (_stored_login_attempt_id, stored_code) = two_fa_code_store
-        .get_code(&Email::from_str(email).unwrap())
+        .get_code(&Email::parse(Secret::new(email.to_string())).unwrap())
         .await
         .unwrap();
     drop(two_fa_code_store); // Release the write lock
@@ -167,7 +167,7 @@ async fn should_return_401_if_same_code_twice() {
     let login_attempt_id = login_body["loginAttemptId"].as_str().unwrap();
     let two_fa_code_store = app.state().two_fa_code_store.write().await;
     let (_stored_login_attempt_id, stored_code) = two_fa_code_store
-        .get_code(&Email::from_str(email).unwrap())
+        .get_code(&Email::parse(Secret::new(email.to_string())).unwrap())
         .await
         .unwrap();
     drop(two_fa_code_store); // Release the write lock

@@ -61,13 +61,13 @@ impl UserStore for HashmapUserStore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str::FromStr;
+    use secrecy::Secret;
 
     #[tokio::test]
     async fn test_add_user() {
         let mut store = HashmapUserStore::new();
-        let email = Email::from_str("test@test.com").unwrap();
-        let password = Password::from_str("password").unwrap();
+        let email = Email::parse(Secret::new("test@test.com".to_string())).unwrap();
+        let password = Password::parse(Secret::new("password".to_string())).unwrap();
         let user = User::new(email, password, false);
         assert_eq!(store.add_user(user.clone()).await, Ok(()));
         assert_eq!(
@@ -79,9 +79,9 @@ mod tests {
     #[tokio::test]
     async fn test_get_user() {
         let mut store = HashmapUserStore::new();
-        let email: Email = Email::from_str("test@test.com").unwrap();
-        let wrong_email = Email::from_str("t@test.com").unwrap();
-        let password = Password::from_str("password").unwrap();
+        let email: Email = Email::parse(Secret::new("test@test.com".to_string())).unwrap();
+        let wrong_email = Email::parse(Secret::new("t@test.com".to_string())).unwrap();
+        let password = Password::parse(Secret::new("password".to_string())).unwrap();
         let user = User::new(email.clone(), password, false);
         store.add_user(user.clone()).await.unwrap();
         assert_eq!(store.get_user(&email).await, Ok(user));
@@ -94,10 +94,11 @@ mod tests {
     #[tokio::test]
     async fn test_validate_user() {
         let mut store = HashmapUserStore::new();
-        let email: Email = Email::from_str("test@test.com").unwrap();
-        let password = Password::from_str("password").unwrap();
-        let wrong_password: Password = Password::from_str("wrong_password").unwrap();
-        let wrong_email = Email::from_str("t@test.com").unwrap();
+        let email: Email = Email::parse(Secret::new("test@test.com".to_string())).unwrap();
+        let password = Password::parse(Secret::new("password".to_string())).unwrap();
+        let wrong_password: Password =
+            Password::parse(Secret::new("wrong_password".to_string())).unwrap();
+        let wrong_email = Email::parse(Secret::new("t@test.com".to_string())).unwrap();
 
         let user = User::new(email.clone(), password.clone(), false);
         store.add_user(user).await.unwrap();

@@ -51,13 +51,13 @@ mod tests {
     use super::HashmapTwoFACodeStore;
     use crate::domain::{Email, LoginAttemptId, TwoFACode, TwoFACodeStore};
 
-    use std::str::FromStr;
+    use secrecy::Secret;
 
     #[tokio::test]
     async fn test_hashmap_two_fa_code_store() {
         let mut store = HashmapTwoFACodeStore::new();
 
-        let email = Email::from_str("test@test.com").unwrap();
+        let email = Email::parse(Secret::new("test@test.com".to_string())).unwrap();
         let login_attempt_id = LoginAttemptId::default();
         let code = TwoFACode::default();
         // Add code

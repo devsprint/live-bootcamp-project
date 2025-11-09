@@ -4,10 +4,11 @@ use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use secrecy::Secret;
 
 #[derive(serde::Deserialize)]
 pub struct TokenRequest {
-    pub token: String,
+    pub token: Secret<String>,
 }
 
 #[tracing::instrument(name = "VerifyToken", skip_all)]
@@ -19,7 +20,7 @@ pub async fn verify_token(
     let is_banned = banned_tokens_store
         .read()
         .await
-        .is_token_banned(&token.token)
+        .is_token_banned(token.token.clone())
         .await;
     if is_banned.is_err() {
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
@@ -27,7 +28,7 @@ pub async fn verify_token(
     if is_banned.unwrap() {
         return StatusCode::UNAUTHORIZED.into_response();
     }
-    let validation = validate_token(&token.token, banned_tokens_store).await;
+    let validation = validate_token(token.token, banned_tokens_store).await;
     if validation.is_err() {
         return StatusCode::UNAUTHORIZED.into_response();
     }

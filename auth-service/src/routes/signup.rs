@@ -4,13 +4,13 @@ use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use secrecy::Secret;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 
 #[derive(Deserialize)]
 pub struct SignupRequest {
-    pub email: String,
-    pub password: String,
+    pub email: Secret<String>,
+    pub password: Secret<String>,
     #[serde(rename = "requires2FA")]
     pub requires_2fa: bool,
 }
@@ -25,11 +25,11 @@ pub async fn signup(
     State(state): State<AppState>,
     Json(request): Json<SignupRequest>,
 ) -> Result<impl IntoResponse, AuthAPIError> {
-    let email: Result<Email, String> = Email::from_str(request.email.trim());
+    let email = Email::parse(request.email);
     if email.is_err() {
         return Err(AuthAPIError::InvalidCredentials);
     }
-    let password: Result<Password, String> = Password::from_str(request.password.trim());
+    let password = Password::parse(request.password);
     if password.is_err() {
         return Err(AuthAPIError::InvalidCredentials);
     }

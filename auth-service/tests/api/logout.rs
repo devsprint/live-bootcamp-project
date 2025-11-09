@@ -2,6 +2,7 @@ use crate::helpers::TestApp;
 use auth_service::utils::JWT_COOKIE_NAME;
 use cleanup_db_macro::api_test;
 use reqwest::Url;
+use secrecy::Secret;
 
 #[api_test]
 async fn should_return_400_if_jwt_cookie_missing() {
@@ -73,7 +74,7 @@ async fn should_return_200_if_valid_jwt_cookie() {
             .banned_tokens
             .read()
             .await
-            .is_token_banned(banned_token.as_str())
+            .is_token_banned(Secret::new(banned_token))
             .await,
         Ok(true)
     );

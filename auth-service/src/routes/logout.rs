@@ -6,6 +6,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_extra::extract::CookieJar;
 use color_eyre::eyre::eyre;
+use secrecy::Secret;
 
 #[tracing::instrument(name = "Logout", skip_all)]
 pub async fn logout(
@@ -23,12 +24,18 @@ pub async fn logout(
     let token = cookie.value().to_owned();
     let banned_token_store = state.banned_tokens.clone();
 
-    let result = crate::utils::auth::validate_token(&token, banned_token_store).await;
+    let result =
+        crate::utils::auth::validate_token(Secret::new(token.clone()), banned_token_store).await;
 
     match result {
         Ok(_claims) => {
             let jar = jar.clone().remove(cookie.clone());
-            let result = state.banned_tokens.write().await.ban_token(&token).await;
+            let result = state
+                .banned_tokens
+                .write()
+                .await
+                .ban_token(Secret::new(token))
+                .await;
             if result.is_err() {
                 return Err(AuthAPIError::UnexpectedError(eyre!("Failed to ban token.")));
             }

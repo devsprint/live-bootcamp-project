@@ -1,23 +1,37 @@
-use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use color_eyre::eyre;
+use color_eyre::eyre::eyre;
+use secrecy::{ExposeSecret, Secret};
+use serde::Deserialize;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Password(String);
+#[derive(Debug, Clone, Deserialize)]
+pub struct Password(Secret<String>);
 
-impl FromStr for Password {
-    type Err = String;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        if value.len() < 8 {
-            return Err("Password must be at least 8 characters long".to_string());
+impl Password {
+    pub fn parse(s: Secret<String>) -> eyre::Result<Password> {
+        if validate_password(&s) {
+            Ok(Self(s))
+        } else {
+            Err(eyre!("Failed to parse string to a Password type"))
         }
-
-        Ok(Self(value.to_string()))
     }
 }
 
-impl AsRef<str> for Password {
-    fn as_ref(&self) -> &str {
+fn validate_password(s: &Secret<String>) -> bool {
+    // Updated!
+    s.expose_secret().len() >= 8
+}
+
+impl PartialEq for Password {
+    // New!
+    fn eq(&self, other: &Self) -> bool {
+        // We can use the expose_secret method to expose the secret in a
+        // controlled manner when needed!
+        self.0.expose_secret() == other.0.expose_secret() // Updated!
+    }
+}
+
+impl AsRef<Secret<String>> for Password {
+    fn as_ref(&self) -> &Secret<String> {
         &self.0
     }
 }
@@ -33,28 +47,30 @@ mod tests {
     #[test]
     fn test_password_valid() {
         let val: String = FakePassword(8..20).fake();
-        let password: Result<Password, String> = Password::from_str(val.as_str());
+        let password = Password::parse(Secret::new(val));
         assert!(password.is_ok());
     }
 
     #[test]
     fn test_password_too_short() {
-        let val = "short";
-        let password: Result<Password, String> = Password::from_str(val);
+        let val = Secret::new("short".to_string());
+        let password = Password::parse(val);
         assert!(password.is_err());
     }
 
-    impl Arbitrary for Password {
+    #[derive(Debug, Clone)]
+    struct ValidPasswordFixture(pub Secret<String>);
+
+    impl Arbitrary for ValidPasswordFixture {
         fn arbitrary(_g: &mut quickcheck::Gen) -> Self {
             let password_string: String = FakePassword(8..20).fake();
-            Password::from_str(password_string.as_str()).unwrap()
+            Self(Secret::new(password_string))
         }
     }
 
     quickcheck! {
-        fn prop_password(password: Password) -> bool {
-            let password_str = password.as_ref();
-            password_str.len() >= 8
+        fn prop_password(valid_password: ValidPasswordFixture) -> bool {
+            Password::parse(valid_password.0).is_ok()
         }
     }
 }
