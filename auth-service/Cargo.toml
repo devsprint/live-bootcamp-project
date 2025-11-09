@@ -10,7 +10,7 @@ axum = { version = "0.8.6", features = ["macros"] }
 axum-extra = { version = "0.10.3", features = ["cookie"] }
 tokio = { version = "1.47.1", features = ["full"] }
 tower-http = { version = "0.6.6", features = ["fs", "cors", "trace"] }
-reqwest = { version = "0.12.24", default-features = false, features = ["json"] }
+reqwest = { version = "0.12.24", default-features = false, features = ["json", "rustls-tls", "cookies"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 jsonwebtoken = { version ="10.1.0", features = ["rust_crypto"] }
@@ -38,3 +38,4 @@ reqwest = { version = "0.12.24", default-features = false, features = ["json", "
 fake = { version = "4.4.0", features = ["derive"] }
 quickcheck = "1.0.3"
 quickcheck_macros = "1.1.0"
+wiremock = "0.6.0"

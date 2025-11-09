@@ -4,6 +4,8 @@ use auth_service::routes::TwoFactorAuthResponse;
 use auth_service::utils::JWT_COOKIE_NAME;
 use cleanup_db_macro::api_test;
 use secrecy::Secret;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, ResponseTemplate};
 
 #[api_test]
 async fn should_return_422_if_malformed_credentials() {
@@ -96,6 +98,13 @@ async fn should_return_206_if_valid_credentials_and_2fa_enabled() {
     let response = app.post_signup(&signup_body).await;
 
     assert_eq!(response.status().as_u16(), 201);
+
+    Mock::given(path("/email")) // Expect an HTTP request to the "/email" path
+        .and(method("POST")) // Expect the HTTP method to be POST
+        .respond_with(ResponseTemplate::new(200)) // Respond with an HTTP 200 OK status
+        .expect(1) // Expect this request to be made exactly once
+        .mount(&app.email_server) // Mount this expectation on the mock email server
+        .await; // Await the asynchronous operation to ensure the mock server is set up before proceeding
 
     let login_body = serde_json::json!({
         "email": random_email,

@@ -1,9 +1,12 @@
+use auth_service::domain::{Email, EmailClient};
 use auth_service::services::data_stores::postgres_user_store::PostgresUserStore;
 use auth_service::services::data_stores::redis_banned_token_store::RedisBannedTokenStore;
-use auth_service::services::{MockEmailClient, RedisTwoFACodeStore};
+use auth_service::services::{PostmarkEmailClient, RedisTwoFACodeStore};
 use auth_service::utils::tracing::init_tracing;
-use auth_service::utils::{DATABASE_URL, REDIS_HOST_NAME, prod};
+use auth_service::utils::{DATABASE_URL, POSTMARK_AUTH_TOKEN, REDIS_HOST_NAME, prod};
 use auth_service::{Application, get_postgres_pool, get_redis_client};
+use reqwest::Client;
+use secrecy::Secret;
 use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -16,13 +19,16 @@ async fn main() {
     let pg_pool = configure_postgresql().await;
     let user_store = PostgresUserStore::new(pg_pool);
     let redis = Arc::new(RwLock::new(configure_redis()));
+    let email_client: Arc<RwLock<Box<dyn EmailClient>>> =
+        Arc::new(RwLock::new(Box::new(configure_postmark_email_client())));
+
     let app_state = auth_service::AppState {
         user_store: Arc::new(RwLock::new(Box::new(user_store))),
         banned_tokens: Arc::new(RwLock::new(Box::new(RedisBannedTokenStore::new(
             redis.clone(),
         )))),
         two_fa_code_store: Arc::new(RwLock::new(Box::new(RedisTwoFACodeStore::new(redis)))),
-        email_client: Arc::new(RwLock::new(Box::new(MockEmailClient))),
+        email_client: email_client.clone(),
     };
 
     let app = Application::build(app_state, prod::APP_ADDRESS)
@@ -52,4 +58,18 @@ fn configure_redis() -> redis::Connection {
         .expect("Failed to get Redis client")
         .get_connection()
         .expect("Failed to get Redis connection")
+}
+
+fn configure_postmark_email_client() -> PostmarkEmailClient {
+    let http_client = Client::builder()
+        .timeout(prod::email_client::TIMEOUT)
+        .build()
+        .expect("Failed to build HTTP client");
+
+    PostmarkEmailClient::new(
+        prod::email_client::BASE_URL.to_owned(),
+        Email::parse(Secret::new(prod::email_client::SENDER.to_owned())).unwrap(),
+        POSTMARK_AUTH_TOKEN.to_owned(),
+        http_client,
+    )
 }

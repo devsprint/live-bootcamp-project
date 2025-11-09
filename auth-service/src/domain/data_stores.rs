@@ -95,7 +95,7 @@ impl PartialEq for LoginAttemptId {
 
 impl AsRef<str> for LoginAttemptId {
     fn as_ref(&self) -> &str {
-        &self.0.expose_secret()
+        self.0.expose_secret()
     }
 }
 
@@ -165,6 +165,6 @@ impl Default for TwoFACode {
 
 impl AsRef<str> for TwoFACode {
     fn as_ref(&self) -> &str {
-        &self.0.expose_secret()
+        self.0.expose_secret()
     }
 }

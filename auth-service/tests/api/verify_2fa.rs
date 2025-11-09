@@ -4,6 +4,8 @@ use axum::http::StatusCode;
 use cleanup_db_macro::api_test;
 use secrecy::Secret;
 use serde_json::json;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, ResponseTemplate};
 
 #[api_test]
 async fn should_return_422_if_malformed_input() {
@@ -38,6 +40,14 @@ async fn should_return_401_if_incorrect_credentials() {
         }))
         .await;
     assert_eq!(signup_response.status(), StatusCode::CREATED);
+
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(1)
+        .mount(&app.email_server)
+        .await;
+
     // Next, attempt to log in to get a loginAttemptId
     let login_response = app
         .post_login(&json!({
@@ -72,6 +82,13 @@ async fn should_return_401_if_old_code() {
         }))
         .await;
     assert_eq!(signup_response.status(), StatusCode::CREATED);
+
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(2)
+        .mount(&app.email_server)
+        .await;
     // Next, attempt to log in to get the first loginAttemptId
     let first_login_response = app
         .post_login(&json!({
@@ -115,6 +132,14 @@ async fn should_return_200_if_correct_code() {
         }))
         .await;
     assert_eq!(signup_response.status(), StatusCode::CREATED);
+
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(1)
+        .mount(&app.email_server)
+        .await;
+
     // Next, attempt to log in to get a loginAttemptId
     let login_response = app
         .post_login(&json!({
@@ -155,6 +180,12 @@ async fn should_return_401_if_same_code_twice() {
         }))
         .await;
     assert_eq!(signup_response.status(), StatusCode::CREATED);
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(1)
+        .mount(&app.email_server)
+        .await;
     // Next, attempt to log in to get a loginAttemptId
     let login_response = app
         .post_login(&json!({
