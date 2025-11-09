@@ -21,6 +21,7 @@ impl RedisTwoFACodeStore {
 
 #[async_trait::async_trait]
 impl TwoFACodeStore for RedisTwoFACodeStore {
+    #[tracing::instrument(name = "AddCode", skip_all)]
     async fn add_code(
         &mut self,
         email: Email,
@@ -34,25 +35,27 @@ impl TwoFACodeStore for RedisTwoFACodeStore {
         );
         let serialized_value = serde_json::to_string(&two_fa_tuple)
             .wrap_err("Failed to serialize 2FA code tuple")
-            .map_err(|e| TwoFACodeStoreError::UnexpectedError(e.into()))?;
+            .map_err(TwoFACodeStoreError::UnexpectedError)?;
         let mut conn = self.conn.write().await;
         let _: () = conn
             .set_ex(&key, serialized_value, TEN_MINUTES_IN_SECONDS)
             .wrap_err("Failed to set ten minutes information")
-            .map_err(|e| TwoFACodeStoreError::UnexpectedError(e.into()))?;
+            .map_err(TwoFACodeStoreError::UnexpectedError)?;
         Ok(())
     }
 
+    #[tracing::instrument(name = "RemoveCode", skip_all)]
     async fn remove_code(&mut self, email: &Email) -> Result<(), TwoFACodeStoreError> {
         let key = get_key(email);
         let mut conn = self.conn.write().await;
         let _: () = conn
             .del(&key)
             .wrap_err("Failed to delete 2FA code from Redis")
-            .map_err(|e| TwoFACodeStoreError::UnexpectedError(e.into()))?;
+            .map_err(TwoFACodeStoreError::UnexpectedError)?;
         Ok(())
     }
 
+    #[tracing::instrument(name = "GetCode", skip_all)]
     async fn get_code(
         &self,
         email: &Email,
@@ -64,7 +67,7 @@ impl TwoFACodeStore for RedisTwoFACodeStore {
             .map_err(|_| TwoFACodeStoreError::LoginAttemptIdNotFound)?;
         let two_fa_tuple: TwoFATuple = serde_json::from_str(&result)
             .wrap_err("Failed to deserialize two FA code tuple")
-            .map_err(|e| TwoFACodeStoreError::UnexpectedError(e.into()))?;
+            .map_err(TwoFACodeStoreError::UnexpectedError)?;
         let login_attempt_id = LoginAttemptId::parse(two_fa_tuple.0)
             .map_err(|e| TwoFACodeStoreError::UnexpectedError(eyre!(e)))?;
         let two_fa_code = TwoFACode::parse(two_fa_tuple.1)

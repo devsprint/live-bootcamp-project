@@ -17,6 +17,7 @@ pub struct Verify2FARequest {
     pub two_fa_code: String,
 }
 
+#[tracing::instrument(name = "Verify2FA", skip_all)]
 pub async fn verify_2fa(
     State(state): State<AppState>,
     jar: CookieJar,
@@ -32,7 +33,7 @@ pub async fn verify_2fa(
             .map_err(|_| AuthAPIError::InvalidCredentials)?;
     let two_fa_code_from_request = match crate::domain::TwoFACode::parse(request.two_fa_code) {
         Ok(code) => code,
-        Err(_) => return Err(AuthAPIError::InvalidCredentials),
+        Err(_) => return Err(AuthAPIError::IncorrectCredentials),
     };
 
     let two_fa_code_store = state.two_fa_code_store.write().await;
@@ -48,8 +49,7 @@ pub async fn verify_2fa(
 
     drop(two_fa_code_store);
 
-    let auth_cookie =
-        generate_auth_cookie(&email).map_err(|e| AuthAPIError::UnexpectedError(e.into()))?;
+    let auth_cookie = generate_auth_cookie(&email).map_err(AuthAPIError::UnexpectedError)?;
 
     let updated_jar = jar.add(auth_cookie);
     state

@@ -37,12 +37,27 @@ pub trait UserStore: Send + Sync {
     -> Result<(), UserStoreError>;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Error)]
 pub enum TokenStoreError {
+    #[error("Token not found")]
     TokenNotFound,
+    #[error("Token already banned")]
     TokenAlreadyBanned,
-    UnexpectedError,
+    #[error("Unexpected error")]
+    UnexpectedError(#[source] Report),
 }
+
+impl PartialEq for TokenStoreError {
+    fn eq(&self, other: &Self) -> bool {
+        matches!(
+            (self, other),
+            (Self::TokenNotFound, Self::TokenNotFound)
+                | (Self::TokenAlreadyBanned, Self::TokenAlreadyBanned)
+                | (Self::UnexpectedError(_), Self::UnexpectedError(_))
+        )
+    }
+}
+
 #[async_trait]
 pub trait BannedTokenStore: Send + Sync {
     async fn ban_token(&mut self, token: &str) -> Result<(), TokenStoreError>;
@@ -112,12 +127,12 @@ pub struct TwoFACode(String);
 
 impl TwoFACode {
     pub fn parse(code: String) -> eyre::Result<Self> {
-        let code_as_u32 = code.parse::<u32>().wrap_err("Invalid 2FA code")?; // Updated!
+        let code_as_u32 = code.parse::<u32>().wrap_err("Invalid 2FA code")?;
 
-        if (100_000..=999_999).contains(&code_as_u32) {
+        if (000_000..=999_999).contains(&code_as_u32) {
             Ok(Self(code))
         } else {
-            Err(eyre!("Invalid 2FA code")) // Updated!
+            Err(eyre!("Invalid 2FA code"))
         }
     }
 }

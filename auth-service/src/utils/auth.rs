@@ -3,27 +3,27 @@ use crate::app_state::BannedTokenStoreType;
 use crate::domain::Email;
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use chrono::Utc;
-use color_eyre::Report;
-use color_eyre::eyre::eyre;
+use color_eyre::eyre::{Context, eyre};
+use color_eyre::{Report, eyre};
 use jsonwebtoken::{DecodingKey, EncodingKey, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum GenerateTokenError {
-    #[error("Token error")]
-    TokenError,
     #[error("Unexpected error")]
     UnexpectedError(#[source] Report),
 }
 
 pub const TOKEN_TTL_SECONDS: i64 = 600;
 
-pub fn generate_auth_cookie(email: &Email) -> Result<Cookie<'static>, GenerateTokenError> {
+#[tracing::instrument(name = "GenerateAuthCookie", skip_all)]
+pub fn generate_auth_cookie(email: &Email) -> eyre::Result<Cookie<'static>> {
     let token = generate_auth_token(email)?;
     Ok(create_auth_cookie(token))
 }
 
+#[tracing::instrument(name = "CreateAuthCookie", skip_all)]
 fn create_auth_cookie(token: String) -> Cookie<'static> {
     Cookie::build((JWT_COOKIE_NAME, token))
         .path("/")
@@ -37,7 +37,8 @@ pub struct Claims {
     pub exp: usize,
 }
 
-fn generate_auth_token(email: &Email) -> Result<String, GenerateTokenError> {
+#[tracing::instrument(name = "GenerateAuthToken", skip_all)]
+fn generate_auth_token(email: &Email) -> eyre::Result<String> {
     let delta = chrono::Duration::try_seconds(TOKEN_TTL_SECONDS).ok_or(
         GenerateTokenError::UnexpectedError(eyre!("Failed to convert to seconds.")),
     )?;
@@ -57,25 +58,22 @@ fn generate_auth_token(email: &Email) -> Result<String, GenerateTokenError> {
 
     let claims = Claims { sub, exp };
 
-    create_token(&claims).map_err(|_| GenerateTokenError::TokenError)
+    create_token(&claims)
 }
 
+#[tracing::instrument(name = "ValidateToken", skip_all)]
 pub async fn validate_token(
     token: &str,
     banned_token_store: BannedTokenStoreType,
-) -> Result<Claims, jsonwebtoken::errors::Error> {
+) -> eyre::Result<Claims> {
     match banned_token_store.read().await.is_token_banned(token).await {
         Ok(value) => {
             if value {
-                return Err(jsonwebtoken::errors::Error::from(
-                    jsonwebtoken::errors::ErrorKind::InvalidToken,
-                ));
+                return Err(eyre!("Token is banned"));
             }
         }
-        Err(_) => {
-            return Err(jsonwebtoken::errors::Error::from(
-                jsonwebtoken::errors::ErrorKind::InvalidToken,
-            ));
+        Err(e) => {
+            return Err(e.into());
         }
     }
 
@@ -85,14 +83,17 @@ pub async fn validate_token(
         &Validation::default(),
     )
     .map(|data| data.claims)
+    .wrap_err("Failed to decode token")
 }
 
-fn create_token(claims: &Claims) -> Result<String, jsonwebtoken::errors::Error> {
+#[tracing::instrument(name = "CreateToken", skip_all)]
+fn create_token(claims: &Claims) -> eyre::Result<String> {
     encode(
         &jsonwebtoken::Header::default(),
         &claims,
         &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
     )
+    .wrap_err("failed to create token")
 }
 
 #[cfg(test)]

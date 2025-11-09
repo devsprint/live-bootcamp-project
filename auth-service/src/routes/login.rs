@@ -42,6 +42,8 @@ impl LoginRequest {
         &self.password
     }
 }
+
+#[tracing::instrument(name = "Login", skip_all)]
 pub async fn login(
     State(state): State<AppState>,
     jar: CookieJar,
@@ -78,18 +80,19 @@ pub async fn login(
     }
 }
 
+#[tracing::instrument(name = "HandleNo2FA", skip_all)]
 async fn handle_no_2fa(
     email: &Email,
     jar: CookieJar,
 ) -> Result<(CookieJar, Json<LoginResponse>), AuthAPIError> {
-    let auth_cookie =
-        generate_auth_cookie(email).map_err(|e| AuthAPIError::UnexpectedError(e.into()))?;
+    let auth_cookie = generate_auth_cookie(email).map_err(AuthAPIError::UnexpectedError)?;
 
     let updated_jar = jar.add(auth_cookie);
 
     Ok((updated_jar, Json(LoginResponse::RegularAuth)))
 }
 
+#[tracing::instrument(name = "Handle2FA", skip_all)]
 async fn handle_2fa(
     email: &Email,
     state: &AppState,
