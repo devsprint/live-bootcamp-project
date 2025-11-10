@@ -13,7 +13,7 @@ use std::cell::Cell;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::debug;
+use tracing::{debug, info};
 use uuid::Uuid;
 use wiremock::MockServer;
 
@@ -201,6 +201,7 @@ async fn configure_postgresql() -> PgPool {
 }
 
 async fn configure_database(db_conn_string: &str, db_name: &str) {
+    info!("Connecting to {}", db_conn_string);
     // Create database connection
     let connection = PgPoolOptions::new()
         .connect(db_conn_string)
