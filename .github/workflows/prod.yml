@@ -61,6 +61,7 @@ jobs:
       working-directory: ./auth-service
       run: |
         export JWT_SECRET=secret
+        export DATABASE_URL=postgres://postgres:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432
         cargo build --verbose
         cargo test --verbose
 
