@@ -333,6 +333,7 @@ dependencies = [
 [[package]]
 name = "cleanup_db_macro"
 version = "0.1.0"
+source = "git+https://github.com/devsprint/test-helpers.git#68b1ccf2d8c74c8615b10a8fd36f5f7080804eb5"
 dependencies = [
  "proc-macro2",
  "quote",
