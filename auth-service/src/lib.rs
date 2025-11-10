@@ -84,7 +84,6 @@ impl Application {
         // Allow the app service(running on our local machine and in production) to call the auth service
         let allowed_origins = [
             "http://localhost:8000".parse()?,
-            // TODO: Replace [YOUR_DROPLET_IP] with your Droplet IP address
             "http://http://137.184.153.39:8000".parse()?,
         ];
 
